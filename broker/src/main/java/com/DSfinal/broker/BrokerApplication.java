@@ -3,7 +3,7 @@ package com.DSfinal.broker;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.DSfinal")
 public class BrokerApplication {
 
 	public static void main(String[] args) {
