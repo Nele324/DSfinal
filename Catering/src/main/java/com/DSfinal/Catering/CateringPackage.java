@@ -23,4 +23,10 @@ public class CateringPackage {
     public int getMaxGuests() { return maxGuests; }
     public double getPricePerPerson() { return pricePerPerson; }
     public boolean isAvailable() { return available; }
+
+    //setters
+    public void setId(String id) { this.id = id; }
+    public void setName(String name) { this.name = name; }
+    public void setPricePerPerson(double pricePerPerson) { this.pricePerPerson = pricePerPerson; }
+    public void setAvailable(boolean available) { this.available = available; }
 }

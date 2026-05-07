@@ -14,6 +14,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/broker")
@@ -33,6 +35,27 @@ public class BrokerController {
 
     @Value("${venue.service.url}")
     private String venueServiceUrl;
+
+    @GetMapping("/all-combinations")
+    public List<CombinedOption> getAllCombinations() {
+        // Gebruik de variabelen uit application.properties in plaats van hardcoded "localhost"
+        // Let op: zorg dat de paden (/venue/halls) overeenkomen met de Controllers in die services
+        VenueHall[] venues = restTemplate.getForObject(venueServiceUrl + "/venue/halls", VenueHall[].class);
+        CateringPackage[] caterings = restTemplate.getForObject(cateringServiceUrl + "/catering/packages", CateringPackage[].class);
+
+        List<CombinedOption> combinations = new ArrayList<>();
+
+        if (venues != null && caterings != null) {
+            for (VenueHall v : venues) {
+                System.out.println("Checking Venue: " + v.getName() + " Price: " + v.getPricePerDay());
+                for (CateringPackage c : caterings) {
+                    System.out.println("Checking Catering: " + c.getName() + " Price: " + c.getPricePerPerson();
+                    combinations.add(new CombinedOption(v, c));
+                }
+            }
+        }
+        return combinations;
+    }
 
     @GetMapping("/available-packages")
     public AvailablePackagesResponse getAvailablePackages() {
