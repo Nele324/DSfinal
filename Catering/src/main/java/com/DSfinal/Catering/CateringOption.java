@@ -1,15 +1,16 @@
-//a simple data model of what catering package looks like
-
 package com.DSfinal.Catering;
 
-public class CateringPackage {
+public class CateringOption {
+
     private String id;
     private String name;
     private int maxGuests;
     private double pricePerPerson;
     private boolean available;
 
-    public CateringPackage(String id, String name, int maxGuests, double pricePerPerson, boolean available) {
+    public CateringOption() {}
+
+    public CateringOption(String id, String name, int maxGuests, double pricePerPerson, boolean available) {
         this.id = id;
         this.name = name;
         this.maxGuests = maxGuests;
@@ -17,16 +18,18 @@ public class CateringPackage {
         this.available = available;
     }
 
-    // Getters
     public String getId() { return id; }
-    public String getName() { return name; }
-    public int getMaxGuests() { return maxGuests; }
-    public double getPricePerPerson() { return pricePerPerson; }
-    public boolean isAvailable() { return available; }
-
-    //setters
     public void setId(String id) { this.id = id; }
+
+    public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public int getMaxGuests() { return maxGuests; }
+    public void setMaxGuests(int maxGuests) { this.maxGuests = maxGuests; }
+
+    public double getPricePerPerson() { return pricePerPerson; }
     public void setPricePerPerson(double pricePerPerson) { this.pricePerPerson = pricePerPerson; }
+
+    public boolean isAvailable() { return available; }
     public void setAvailable(boolean available) { this.available = available; }
 }
