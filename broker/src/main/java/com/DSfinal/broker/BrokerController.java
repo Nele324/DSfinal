@@ -26,6 +26,9 @@ public class BrokerController {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private OrderRepository orderRepository;
+
     //@value reads a value from your application.properties file and
     //injects it into a variable.
     //We don’t hardcode this
@@ -41,20 +44,23 @@ public class BrokerController {
         // Gebruik de variabelen uit application.properties in plaats van hardcoded "localhost"
         // Let op: zorg dat de paden (/venue/halls) overeenkomen met de Controllers in die services
         VenueHall[] venues = restTemplate.getForObject(venueServiceUrl + "/venue/halls", VenueHall[].class);
-        CateringPackage[] caterings = restTemplate.getForObject(cateringServiceUrl + "/catering/packages", CateringPackage[].class);
+        CateringPackage[] caterings = restTemplate.getForObject(cateringServiceUrl + "/catering/options", CateringPackage[].class);
 
         List<CombinedOption> combinations = new ArrayList<>();
 
         if (venues != null && caterings != null) {
             for (VenueHall v : venues) {
-                System.out.println("Checking Venue: " + v.getName() + " Price: " + v.getPricePerDay());
                 for (CateringPackage c : caterings) {
-                    System.out.println("Checking Catering: " + c.getName() + " Price: " + c.getPricePerPerson();
                     combinations.add(new CombinedOption(v, c));
                 }
             }
         }
         return combinations;
+    }
+
+    @GetMapping("/orders")
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
     }
 
     @GetMapping("/available-packages")

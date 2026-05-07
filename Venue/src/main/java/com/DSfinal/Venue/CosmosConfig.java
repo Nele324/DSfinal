@@ -11,8 +11,8 @@ public class CosmosConfig {
     @Bean
     public CosmosClient cosmosClient() {
         return new CosmosClientBuilder()
-                .endpoint(System.getenv("COSMOS_ENDPOINT"))
-                .key(System.getenv("COSMOS_KEY"))
+                .endpoint(System.getenv("COSMOS_ENDPOINT1"))
+                .key(System.getenv("COSMOS_KEY1"))
                 .buildClient();
     }
 }
