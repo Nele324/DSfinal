@@ -6,6 +6,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
@@ -61,6 +63,17 @@ public class BrokerController {
     @GetMapping("/orders")
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
+    }
+
+    @PostMapping("/place-order")
+    public ResponseEntity<String> placeOrder(@RequestBody Order orderRequest) {
+        try {
+            // We slaan het object direct op in Azure SQL
+            orderRepository.save(orderRequest);
+            return ResponseEntity.ok("Order succesvol opgeslagen met ID: " + orderRequest.getId());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Fout bij opslaan order: " + e.getMessage());
+        }
     }
 
     @GetMapping("/available-packages")
