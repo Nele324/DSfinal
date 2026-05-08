@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Portal | Login</title>
+    <style>
+        :root {
+            --admin-primary: #34495e;
+            --admin-accent: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2c3e50 0%, #000000 100%);
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 400px;
+            color: white;
+            text-align: center;
+        }
+
+        .login-card h2 { margin-bottom: 2rem; font-weight: 300; letter-spacing: 2px; }
+
+        .form-group { text-align: left; margin-bottom: 1.5rem; }
+
+        label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #bdc3c7; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 5px;
+            color: white;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--admin-accent); }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: var(--admin-accent);
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: background 0.3s;
+        }
+
+        .btn-login:hover { background: #2980b9; }
+
+        .error-msg { color: #e74c3c; margin-bottom: 1rem; font-size: 0.9rem; }
+
+        .back-link { display: block; margin-top: 1.5rem; color: #7f8c8d; text-decoration: none; font-size: 0.8rem; }
+        .back-link:hover { color: white; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>MANAGER PORTAL</h2>
+
+    <div th:if="${error}" class="error-msg" th:text="${error}"></div>
+
+    <form th:action="@{/manager/login}" method="post">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" required autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>Security Key</label>
+            <input type="password" name="password" required>
+        </div>
+        <button type="submit" class="btn-login">Authenticate</button>
+    </form>
+
+    <a href="/" class="back-link">← Return to Public Site</a>
+</div>
+
+</body>
+</html>

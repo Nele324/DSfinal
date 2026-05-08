@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Event Planner</title>
+    <style>
+        /* --- General Reset & Layout --- */
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --light: #f4f7f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: var(--light);
+            color: #333;
+        }
+
+        /* --- Header & Burger Menu --- */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .burger-menu {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .burger-menu div {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        /* --- Scrollable Sections --- */
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .selection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .scroll-box {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            height: 400px; /* Fixed height */
+            overflow-y: auto; /* Makes it scrollable */
+            border: 1px solid #ddd;
+        }
+
+        /* Custom Scrollbar Styling */
+        .scroll-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scroll-box::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        /* --- Item Cards --- */
+        .item-card {
+            border: 1px solid #eee;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .item-card:hover {
+            border-color: var(--accent);
+            background-color: #f9fcff;
+        }
+
+        .item-details h4 { margin: 0; color: var(--primary); }
+        .item-price { font-weight: bold; color: var(--success); }
+
+        /* --- Checkout Form --- */
+        .checkout-section {
+            background: white;
+            margin-top: 2rem;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .btn-order {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.3s;
+        }
+
+        .btn-order:hover { opacity: 0.9; }
+
+        .status-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h2 style="margin:0;">EventFlow Broker</h2>
+    </div>
+    <div class="status-badge">
+        System Status: <span th:text="${status}">Online</span>
+    </div>
+    <div class="burger-menu" onclick="alert('Menu clicked - Future Admin Login here!')">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</header>
+
+<div class="main-container">
+    <form th:action="@{/broker/confirm-order}" method="post">
+
+        <div class="selection-grid">
+            <div>
+                <h3>1. Select Catering</h3>
+                <div class="scroll-box">
+                    <div class="item-card" th:each="item : ${cateringPackages}">
+                        <div class="item-details">
+                            <h4 th:text="${item.name}">Package Name</h4>
+                            <small th:text="'Max Guests: ' + ${item.maxGuests}">0</small>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="item-price" th:text="'$' + ${item.pricePerPerson}">$0</div>
+                            <input type="radio" name="selectedCatering" th:value="${item.id}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3>2. Select Venue</h3>
+                <div class="scroll-box">
+                    <div class="item-card" th:each="hall : ${venues}">
+                        <div class="item-details">
+                            <h4 th:text="${hall.name}">Hall Name</h4>
+                            <small th:text="'Capacity: ' + ${hall.capacity}">0</small>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="item-price" th:text="'$' + ${hall.pricePerDay}">$0</div>
+                            <input type="radio" name="selectedVenue" th:value="${hall.id}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="checkout-section">
+            <h3>3. Finalize Booking</h3>
+            <div class="selection-grid">
+                <div class="form-group">
+                    <label>Event Address</label>
+                    <input type="text" name="address" placeholder="123 Azure Way, Cloud City" required>
+                </div>
+                <div class="form-group">
+                    <label>Payment Card Number (Simulated)</label>
+                    <input type="text" name="cardNumber" placeholder="4444 5555 6666 7777" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-order">Place Atomic Order</button>
+        </div>
+
+        <div class="burger-menu" onclick="window.location.href='/manager/login'">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+
+    </form>
+</div>
+
+</body>
+</html>

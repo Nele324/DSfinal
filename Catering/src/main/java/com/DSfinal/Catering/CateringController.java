@@ -2,9 +2,8 @@
 //decides what should happen next
 package com.DSfinal.Catering;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,5 +18,11 @@ public class CateringController {
                 new CateringPackage("C2", "Premium Dinner", 100, 45.0, true),
                 new CateringPackage("C3", "Cocktail Reception", 150, 30.0, false)
         );
+    }
+
+    @PostMapping("/reserve/{id}")
+    public ResponseEntity<Boolean> reserve(@PathVariable String id) {
+        System.out.println("Catering " + id + " has been reserved via Broker.");
+        return ResponseEntity.ok(true);
     }
 }

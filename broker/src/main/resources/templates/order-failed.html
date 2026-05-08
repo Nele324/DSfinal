@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Failed</title></head>
+<body>
+<h1 style="color: red;">Transaction Failed</h1>
+<p th:text="${error}"></p>
+<p>No charges were made and no partial bookings were saved. Please try again.</p>
+<a href="/">Back to Shop</a>
+</body>
+</html>
