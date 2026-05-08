@@ -152,7 +152,7 @@
     <div class="status-badge">
         System Status: <span th:text="${status}">Online</span>
     </div>
-    <div class="burger-menu" onclick="alert('Menu clicked - Future Admin Login here!')">
+    <div class="burger-menu" th:onclick="|window.location.href='@{/manager/login}'|">
         <div></div>
         <div></div>
         <div></div>
