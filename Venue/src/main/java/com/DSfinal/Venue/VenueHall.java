@@ -1,4 +1,3 @@
-//a simple data model of what a venue hall looks like
 package com.DSfinal.Venue;
 
 public class VenueHall {
@@ -9,6 +8,8 @@ public class VenueHall {
     private double pricePerDay;
     private boolean available;
 
+    public VenueHall() {}
+
     public VenueHall(String id, String name, int capacity, double pricePerDay, boolean available) {
         this.id = id;
         this.name = name;
@@ -17,10 +18,18 @@ public class VenueHall {
         this.available = available;
     }
 
-    // Getters
     public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
     public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
     public int getCapacity() { return capacity; }
+    public void setCapacity(int capacity) { this.capacity = capacity; }
+
     public double getPricePerDay() { return pricePerDay; }
+    public void setPricePerDay(double pricePerDay) { this.pricePerDay = pricePerDay; }
+
     public boolean isAvailable() { return available; }
+    public void setAvailable(boolean available) { this.available = available; }
 }
