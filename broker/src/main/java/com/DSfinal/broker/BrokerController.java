@@ -86,7 +86,7 @@ public class BrokerController {
         //broker doesn't crash
         try {
             ResponseEntity<List<Map<String, Object>>> cateringResponse = restTemplate.exchange(
-                    cateringServiceUrl + "/catering/packages",
+                    cateringServiceUrl + "/catering/options",
                     HttpMethod.GET,
                     null,
                     new ParameterizedTypeReference<>() {}
