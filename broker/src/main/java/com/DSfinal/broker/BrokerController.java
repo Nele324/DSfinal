@@ -41,6 +41,7 @@ public class BrokerController {
     @Value("${venue.service.url}")
     private String venueServiceUrl;
 
+    // I am not sure why we need to get all combinations
     @GetMapping("/all-combinations")
     public List<CombinedOption> getAllCombinations() {
         // Gebruik de variabelen uit application.properties in plaats van hardcoded "localhost"
@@ -65,6 +66,7 @@ public class BrokerController {
         return orderRepository.findAll();
     }
 
+    //this is just putting the order in broker's database
     @PostMapping("/place-order")
     public ResponseEntity<String> placeOrder(@RequestBody Order orderRequest) {
         try {
@@ -76,53 +78,60 @@ public class BrokerController {
         }
     }
 
+
+    //this is getting the available packages from the suppliers
     @GetMapping("/available-packages")
     public AvailablePackagesResponse getAvailablePackages() {
 
-        // Call Catering Service
-        List<Map<String, Object>> cateringPackages;
-        //added a try/catch block
-        //in case either of the suppliers are unresponsive or return a faulty response
-        //broker doesn't crash
+        // 1. Call Catering Service using the Class instead of a Map
+        List<CateringPackage> cateringPackages;
         try {
-            ResponseEntity<List<Map<String, Object>>> cateringResponse = restTemplate.exchange(
-                    cateringServiceUrl + "/catering/packages",
-                    HttpMethod.GET,
-                    null,
-                    new ParameterizedTypeReference<>() {}
+            CateringPackage[] catArray = restTemplate.getForObject(
+                    cateringServiceUrl + "/catering/options",
+                    CateringPackage[].class
             );
-            cateringPackages = cateringResponse.getBody();
-        } catch (RestClientException e) {
-            // Catering service is down — broker stays up, just reports it
-            System.err.println("Catering service unavailable: " + e.getMessage());
+            cateringPackages = (catArray != null) ? Arrays.asList(catArray) : Collections.emptyList();
+        } catch (Exception e) {
+            System.err.println("Catering error: " + e.getMessage());
             cateringPackages = Collections.emptyList();
         }
 
-        // Call Venue Service
-        List<Map<String, Object>> venues;
+        // 2. Call Venue Service using the Class
+        List<VenueHall> venues;
         try {
-            ResponseEntity<List<Map<String, Object>>> venueResponse = restTemplate.exchange(
+            VenueHall[] venArray = restTemplate.getForObject(
                     venueServiceUrl + "/venue/halls",
-                    HttpMethod.GET,
-                    null,
-                    new ParameterizedTypeReference<>() {}
+                    VenueHall[].class
             );
-            venues = venueResponse.getBody();
-        } catch (RestClientException e) {
-            // Venue service is down — broker stays up, just reports it
-            System.err.println("Venue service unavailable: " + e.getMessage());
+            venues = (venArray != null) ? Arrays.asList(venArray) : Collections.emptyList();
+        } catch (Exception e) {
+            System.err.println("Venue error: " + e.getMessage());
             venues = Collections.emptyList();
         }
 
-        // Combine and return
         String status = (cateringPackages.isEmpty() || venues.isEmpty())
                 ? "PARTIAL - one or more suppliers unavailable"
                 : "OK - all suppliers responding";
 
-        return new AvailablePackagesResponse(venues, cateringPackages, status); //currently broker has a list of
-        //available catering services and venues side by side,
-        //they are not being made into a combo the user will order as a final product
-        //that combo is created only when the user chooses one specific caterer and one specific venue successfully
-        //then, we make a final combo
+        return new AvailablePackagesResponse(venues, cateringPackages, status);
+    }
+
+
+    //this is broker reserving a venue to the supplier
+    public boolean reserveVenue(String id) {
+        try {
+            return restTemplate.postForObject(venueServiceUrl + "/venue/reserve/" + id, null, Boolean.class);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    //this is broker reserving a catering service to the supplier
+    public boolean reserveCatering(String id) {
+        try {
+            return restTemplate.postForObject(cateringServiceUrl + "/catering/reserve/" + id, null, Boolean.class);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

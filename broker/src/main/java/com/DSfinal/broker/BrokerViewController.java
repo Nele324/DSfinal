@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -63,38 +64,41 @@ public class BrokerViewController {
     //to satisfy ACID requirements
     //to ensure that if one part of the order fails the other is NOT finalized
     @PostMapping("/broker/confirm-order")
-    public String placeOrder(OrderRequest request, Model model) {
-        boolean venueReserved = false;
-        boolean cateringReserved = false;
-
+    public String confirmOrder(OrderRequest request, Model model) {
         try {
-            // 1. Attempt to reserve Venue (Supplier A)
-            // You should send a POST request to your venue service
-            venueReserved = restTemplate.postForObject(venueServiceUrl + "venue/reserve/" + request.getSelectedVenue(), null, Boolean.class);
+            // Use the logic already defined in the apiController
+            boolean vRes = apiController.reserveVenue(request.getSelectedVenue());
+            boolean cRes = apiController.reserveCatering(request.getSelectedCatering());
 
-            // 2. Attempt to reserve Catering (Supplier B)
-            cateringReserved = restTemplate.postForObject(cateringServiceUrl + "catering/reserve/" + request.getSelectedCatering(), null, Boolean.class);
-
-            // 3. Check for Atomicity
-            if (venueReserved && cateringReserved) {
-                // SUCCESS: Both suppliers confirmed.
-
-                //!!!!! here LOTTE save the order to Broker's Azure DB.
-                // orderService.save(new Order(request...)); something like this maybe???
+            if (vRes && cRes) {
+                // this is where Lotte will add the
 
                 model.addAttribute("message", "Order Placed Successfully!");
                 return "order-success";
             } else {
-                // FAILURE: One or both failed. Rollback/Undo if necessary.
-                // (In a real system, you'd send a 'cancel' to whichever one succeeded)
-                //!!!!! I still need to write code to cancel the successful reservation
-                throw new Exception("One or more services unavailable.");
+                throw new Exception("One of the suppliers declined.");
             }
-
         } catch (Exception e) {
-            // 4. Handle Failure Scenario
             model.addAttribute("error", "Transaction Failed: " + e.getMessage());
             return "order-failed";
+        }
+    }
+
+    @GetMapping("/manager/login")
+    public String showManagerLogin() {
+        return "manager-login"; // This looks for manager-login.html in /templates/
+    }
+
+    @PostMapping("/manager/login")
+    public String processLogin(@RequestParam String username,
+                               @RequestParam String password,
+                               Model model) {
+        // Simple hardcoded check for now
+        if ("admin".equals(username) && "password123".equals(password)) {
+            return "redirect:/manager/dashboard"; // You'll create this dashboard next!
+        } else {
+            model.addAttribute("error", "Invalid Credentials!");
+            return "manager-login";
         }
     }
 

@@ -5,24 +5,21 @@ import java.util.List;
 import java.util.Map;
 
 public class AvailablePackagesResponse {
-
-    private List<Map<String, Object>> venues;
-    private List<Map<String, Object>> cateringPackages;
+    private List<VenueHall> venues; // Changed from Map to list
+    private List<CateringPackage> cateringPackages; // Changed from Map to list
     private String status;
 
-    public AvailablePackagesResponse(List<Map<String, Object>> venues,
-                                     List<Map<String, Object>> cateringPackages,
-                                     String status) {
+    public AvailablePackagesResponse(List<VenueHall> venues, List<CateringPackage> cateringPackages, String status) {
         this.venues = venues;
         this.cateringPackages = cateringPackages;
         this.status = status;
     }
 
-    public List<Map<String, Object>> getVenues() {
+    public List<VenueHall> getVenues() {
         return venues;
     }
 
-    public List<Map<String, Object>> getCateringPackages() {
+    public List<CateringPackage> getCateringPackages() {
         return cateringPackages;
     }
 
