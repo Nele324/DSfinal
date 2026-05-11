@@ -1,5 +1,6 @@
 package com.DSfinal.Venue;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,8 +15,71 @@ public class VenueController {
         this.venueService = venueService;
     }
 
+    @GetMapping
+    public ResponseEntity<String> home() {
+        return ResponseEntity.ok("Venue service is running");
+    }
+
     @GetMapping("/halls")
-    public List<VenueHall> getHalls() {
-        return venueService.getAllVenues();
+    public ResponseEntity<List<VenueHall>> getAllHalls() {
+        return ResponseEntity.ok(venueService.getAllVenues());
+    }
+
+    @GetMapping("/halls/{id}")
+    public ResponseEntity<?> getHallById(@PathVariable String id) {
+
+        VenueHall hall =
+                venueService.getVenueById(id);
+
+        if (hall == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(hall);
+    }
+
+    @PostMapping("/reserve")
+    public ResponseEntity<ReserveResponse> reserve(
+            @RequestBody ReserveRequest request) {
+
+        ReserveResponse response =
+                venueService.reserveVenue(request);
+
+        if (!response.isSuccess()) {
+            return ResponseEntity.badRequest()
+                    .body(response);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/cancel/{id}")
+    public ResponseEntity<ReserveResponse> cancelReservation(
+            @PathVariable String id) {
+
+        ReserveResponse response =
+                venueService.cancelReservation(id);
+
+        if (!response.isSuccess()) {
+            return ResponseEntity.badRequest()
+                    .body(response);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/confirm/{id}")
+    public ResponseEntity<ReserveResponse> confirmReservation(
+            @PathVariable String id) {
+
+        ReserveResponse response =
+                venueService.confirmReservation(id);
+
+        if (!response.isSuccess()) {
+            return ResponseEntity.badRequest()
+                    .body(response);
+        }
+
+        return ResponseEntity.ok(response);
     }
 }

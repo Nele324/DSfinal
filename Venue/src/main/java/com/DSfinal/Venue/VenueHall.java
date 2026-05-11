@@ -6,7 +6,7 @@ public class VenueHall {
     private String name;
     private int capacity;
     private double pricePerDay;
-    private boolean available;
+    private VenueStatus status;
 
     public VenueHall() {}
 
@@ -15,7 +15,7 @@ public class VenueHall {
         this.name = name;
         this.capacity = capacity;
         this.pricePerDay = pricePerDay;
-        this.available = available;
+        this.status = status;
     }
 
     public String getId() { return id; }
@@ -30,6 +30,6 @@ public class VenueHall {
     public double getPricePerDay() { return pricePerDay; }
     public void setPricePerDay(double pricePerDay) { this.pricePerDay = pricePerDay; }
 
-    public boolean isAvailable() { return available; }
-    public void setAvailable(boolean available) { this.available = available; }
+    public VenueStatus getStatus() { return status; }
+    public void setStatus(VenueStatus status) { this.status = status; }
 }
