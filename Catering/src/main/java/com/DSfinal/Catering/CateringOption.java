@@ -3,6 +3,8 @@ package com.DSfinal.Catering;
 
 import org.springframework.data.annotation.Id;
 
+import java.util.List;
+
 
 public class CateringOption {
 
@@ -12,18 +14,17 @@ public class CateringOption {
     private String name;
     private int maxGuests;
     private double pricePerPerson;
-    private CateringStatus status;
+    private List<String> reservations;
 
     public CateringOption() {
     }
 
-    public CateringOption(String id, String name, int maxGuests,
-                           double pricePerPerson, CateringStatus status) {
+    public CateringOption(String id, String name, int maxGuests, double pricePerPerson, List<String> reservations) {
         this.id = id;
         this.name = name;
         this.maxGuests = maxGuests;
         this.pricePerPerson = pricePerPerson;
-        this.status = status;
+        this.reservations = reservations;
     }
 
     public String getId() {
@@ -58,11 +59,7 @@ public class CateringOption {
         this.pricePerPerson = pricePerPerson;
     }
 
-    public CateringStatus getStatus() {
-        return status;
-    }
+    public List<String> getReservations() { return reservations; }
 
-    public void setStatus(CateringStatus status) {
-        this.status = status;
-    }
+    public void setReservations(List<String> reservations) { this.reservations = reservations; }
 }

@@ -1,21 +1,23 @@
 package com.DSfinal.Venue;
 
+import java.util.List;
+
 public class VenueHall {
 
     private String id;
     private String name;
     private int capacity;
     private double pricePerDay;
-    private VenueStatus status;
+    private List<String> reservations;
 
     public VenueHall() {}
 
-    public VenueHall(String id, String name, int capacity, double pricePerDay, boolean available) {
+    public VenueHall(String id, String name, int capacity, double pricePerDay, List<String> reservations) {
         this.id = id;
         this.name = name;
         this.capacity = capacity;
         this.pricePerDay = pricePerDay;
-        this.status = status;
+        this.reservations = reservations;
     }
 
     public String getId() { return id; }
@@ -30,6 +32,6 @@ public class VenueHall {
     public double getPricePerDay() { return pricePerDay; }
     public void setPricePerDay(double pricePerDay) { this.pricePerDay = pricePerDay; }
 
-    public VenueStatus getStatus() { return status; }
-    public void setStatus(VenueStatus status) { this.status = status; }
+    public List<String> getReservations() { return reservations; }
+    public void setReservations(List<String> reservations) { this.reservations = reservations; }
 }

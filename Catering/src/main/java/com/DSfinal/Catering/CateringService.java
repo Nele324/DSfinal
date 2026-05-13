@@ -2,6 +2,7 @@ package com.DSfinal.Catering;
 
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -13,85 +14,61 @@ public class CateringService {
         this.repository = repository;
     }
 
-    public List<CateringOption> getAllOptions() {
+    public List<CateringOption> getAllPackages() {
+
         return repository.findAll();
     }
 
-    public CateringOption getOptionById(String id) {
-        return repository.findById(id);
+    public List<CateringOption> getAvailablePackages(
+            String date) {
+
+        return repository.findAll()
+                .stream()
+                .filter(c ->
+                        c.getReservations() == null ||
+                                !c.getReservations().contains(date))
+                .toList();
     }
 
-    public CateringOption saveOption(CateringOption option) {
-        return repository.save(option);
-    }
 
-    public ReserveResponse reserveCatering(ReserveRequest request) {
+    public ReserveResponse reservePackage(
+            ReserveRequest request) {
 
-        CateringOption option =
+        CateringOption catering =
                 repository.findById(request.getCateringId());
 
-        if (option == null) {
-            return new ReserveResponse(false, "Option not found");
-        }
-
-        if (option.getStatus() != CateringStatus.AVAILABLE) {
-            return new ReserveResponse(false, "Option not available");
-        }
-
-        if (request.getGuests() > option.getMaxGuests()) {
-            return new ReserveResponse(false,
-                    "Too many guests");
-        }
-
-        option.setStatus(CateringStatus.RESERVED);
-
-        repository.save(option);
-
-        return new ReserveResponse(true,
-                "Reservation successful");
-    }
-
-    public ReserveResponse cancelReservation(String id) {
-
-        CateringOption option = repository.findById(id);
-
-        if (option == null) {
-            return new ReserveResponse(false, "Option not found");
-        }
-
-        option.setStatus(CateringStatus.AVAILABLE);
-
-        repository.save(option);
-
-        return new ReserveResponse(true,
-                "Reservation cancelled");
-    }
-
-    public ReserveResponse confirmReservation(String id) {
-
-        CateringOption option =
-                repository.findById(id);
-
-        if (option == null) {
+        if (catering == null) {
 
             return new ReserveResponse(
                     false,
-                    "Option not found");
+                    "Catering not found"
+            );
         }
 
-        if (option.getStatus() != CateringStatus.RESERVED) {
+        if (catering.getReservations() == null) {
+
+            catering.setReservations(
+                    new ArrayList<>()
+            );
+        }
+
+        if (catering.getReservations()
+                .contains(request.getDate())) {
 
             return new ReserveResponse(
                     false,
-                    "Option must first be RESERVED");
+                    "Catering already booked for this date"
+            );
         }
 
-        option.setStatus(CateringStatus.CONFIRMED);
+        catering.getReservations()
+                .add(request.getDate());
 
-        repository.save(option);
+        repository.save(catering);
 
         return new ReserveResponse(
                 true,
-                "Reservation confirmed");
+                "Catering reserved successfully"
+        );
     }
 }

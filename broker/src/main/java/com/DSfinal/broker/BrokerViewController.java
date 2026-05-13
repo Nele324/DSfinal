@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 import java.util.Collections;
 import java.util.List;
+import java.time.LocalDate;
 
 @Controller
 public class BrokerViewController {
@@ -48,16 +49,30 @@ public class BrokerViewController {
     }
 
     @GetMapping("/")
-    public String showIndex(Model model) {
-        // Use the logic you already wrote to get data from suppliers
-        AvailablePackagesResponse data = apiController.getAvailablePackages();
+    public String showIndex(
+            @RequestParam(required = false) String date,
+            Model model) {
 
-        // Put the data into the "bucket" for index.html to find
+        if (date == null || date.isEmpty()) {
+
+            date = java.time.LocalDate.now().toString();
+        }
+
+        AvailablePackagesResponse data =
+                apiController.getAvailablePackages(date);
+
         model.addAttribute("venues", data.getVenues());
-        model.addAttribute("cateringPackages", data.getCateringPackages());
-        model.addAttribute("status", data.getStatus());
 
-        return "index"; // This tells Spring to look for index.html
+        model.addAttribute("cateringPackages",
+                data.getCateringPackages());
+
+        model.addAttribute("status",
+                data.getStatus());
+
+        model.addAttribute("selectedDate",
+                date);
+
+        return "index";
     }
 
     //this is a method to process the order
@@ -67,8 +82,14 @@ public class BrokerViewController {
     public String confirmOrder(OrderRequest request, Model model) {
         try {
             // Use the logic already defined in the apiController
-            boolean vRes = apiController.reserveVenue(request.getSelectedVenue());
-            boolean cRes = apiController.reserveCatering(request.getSelectedCatering());
+            boolean vRes =
+                    apiController.reserveVenue(
+                            request.getSelectedVenue(),
+                            request.getDate());
+            boolean cRes =
+                    apiController.reserveCatering(
+                            request.getSelectedCatering(),
+                            request.getDate());
 
             if (vRes && cRes) {
                 // this is where Lotte will add the

@@ -2,22 +2,15 @@ package com.DSfinal.broker;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 @RestController
 @RequestMapping("/broker")
@@ -81,55 +74,114 @@ public class BrokerController {
 
     //this is getting the available packages from the suppliers
     @GetMapping("/available-packages")
-    public AvailablePackagesResponse getAvailablePackages() {
+    public AvailablePackagesResponse getAvailablePackages(String date) {
 
-        // 1. Call Catering Service using the Class instead of a Map
         List<CateringPackage> cateringPackages;
+
         try {
-            CateringPackage[] catArray = restTemplate.getForObject(
-                    cateringServiceUrl + "/catering/options",
-                    CateringPackage[].class
-            );
-            cateringPackages = (catArray != null) ? Arrays.asList(catArray) : Collections.emptyList();
+
+            CateringPackage[] catArray =
+                    restTemplate.getForObject(
+                            cateringServiceUrl +
+                                    "/catering/options?date=" + date,
+                            CateringPackage[].class
+                    );
+
+            cateringPackages = (catArray != null)
+                    ? Arrays.asList(catArray)
+                    : Collections.emptyList();
+
         } catch (Exception e) {
+
             System.err.println("Catering error: " + e.getMessage());
+
             cateringPackages = Collections.emptyList();
         }
 
-        // 2. Call Venue Service using the Class
         List<VenueHall> venues;
+
         try {
-            VenueHall[] venArray = restTemplate.getForObject(
-                    venueServiceUrl + "/venue/halls",
-                    VenueHall[].class
-            );
-            venues = (venArray != null) ? Arrays.asList(venArray) : Collections.emptyList();
+
+            VenueHall[] venArray =
+                    restTemplate.getForObject(
+                            venueServiceUrl +
+                                    "/venue/halls?date=" + date,
+                            VenueHall[].class
+                    );
+
+            venues = (venArray != null)
+                    ? Arrays.asList(venArray)
+                    : Collections.emptyList();
+
         } catch (Exception e) {
+
             System.err.println("Venue error: " + e.getMessage());
+
             venues = Collections.emptyList();
         }
 
-        String status = (cateringPackages.isEmpty() || venues.isEmpty())
-                ? "PARTIAL - one or more suppliers unavailable"
-                : "OK - all suppliers responding";
+        String status =
+                (cateringPackages.isEmpty() || venues.isEmpty())
+                        ? "PARTIAL - one or more suppliers unavailable"
+                        : "OK - all suppliers responding";
 
-        return new AvailablePackagesResponse(venues, cateringPackages, status);
+        return new AvailablePackagesResponse(
+                venues,
+                cateringPackages,
+                status
+        );
     }
 
 
     //this is broker reserving a venue to the supplier
-    public boolean reserveVenue(String id) {
+    public boolean reserveVenue(String id, String date) {
+
         try {
-            return restTemplate.postForObject(venueServiceUrl + "/venue/reserve/" + id, null, Boolean.class);
+
+            Map<String, Object> request = Map.of(
+                    "venueId", id,
+                    "date", date
+            );
+
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(
+                            venueServiceUrl + "/venue/reserve",
+                            request,
+                            Map.class
+                    );
+
+            Map body = response.getBody();
+
+            return body != null &&
+                    Boolean.TRUE.equals(body.get("success"));
+
         } catch (Exception e) {
             return false;
         }
     }
 
     //this is broker reserving a catering service to the supplier
-    public boolean reserveCatering(String id) {
+    public boolean reserveCatering(String id, String date) {
+
         try {
-            return restTemplate.postForObject(cateringServiceUrl + "/catering/reserve/" + id, null, Boolean.class);
+
+            Map<String, Object> request = Map.of(
+                    "cateringId", id,
+                    "date", date
+            );
+
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(
+                            cateringServiceUrl + "/catering/reserve",
+                            request,
+                            Map.class
+                    );
+
+            Map body = response.getBody();
+
+            return body != null &&
+                    Boolean.TRUE.equals(body.get("success"));
+
         } catch (Exception e) {
             return false;
         }

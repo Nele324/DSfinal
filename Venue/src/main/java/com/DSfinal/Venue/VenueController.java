@@ -21,12 +21,21 @@ public class VenueController {
     }
 
     @GetMapping("/halls")
-    public ResponseEntity<List<VenueHall>> getAllHalls() {
-        return ResponseEntity.ok(venueService.getAllVenues());
+    public ResponseEntity<List<VenueHall>> getAllHalls(
+            @RequestParam(required = false) String date) {
+
+        if (date == null) {
+            return ResponseEntity.ok(
+                    venueService.getAllVenues());
+        }
+
+        return ResponseEntity.ok(
+                venueService.getAvailableVenues(date));
     }
 
     @GetMapping("/halls/{id}")
-    public ResponseEntity<?> getHallById(@PathVariable String id) {
+    public ResponseEntity<?> getHallById(
+            @PathVariable String id) {
 
         VenueHall hall =
                 venueService.getVenueById(id);
@@ -53,33 +62,24 @@ public class VenueController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/cancel/{id}")
-    public ResponseEntity<ReserveResponse> cancelReservation(
-            @PathVariable String id) {
+    @DeleteMapping("/cancel")
+    public ResponseEntity<String> cancelReservation(
+            @RequestParam String venueId,
+            @RequestParam String date) {
 
-        ReserveResponse response =
-                venueService.cancelReservation(id);
+        VenueHall hall = venueService.getVenueById(venueId);
 
-        if (!response.isSuccess()) {
+        if (hall == null) {
             return ResponseEntity.badRequest()
-                    .body(response);
+                    .body("Venue not found");
         }
 
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/confirm/{id}")
-    public ResponseEntity<ReserveResponse> confirmReservation(
-            @PathVariable String id) {
-
-        ReserveResponse response =
-                venueService.confirmReservation(id);
-
-        if (!response.isSuccess()) {
-            return ResponseEntity.badRequest()
-                    .body(response);
+        if (hall.getReservations() != null) {
+            hall.getReservations().remove(date);
         }
 
-        return ResponseEntity.ok(response);
+        venueService.saveVenue(hall);
+
+        return ResponseEntity.ok("Reservation cancelled");
     }
 }

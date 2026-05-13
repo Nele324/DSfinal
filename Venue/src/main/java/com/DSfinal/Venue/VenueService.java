@@ -2,6 +2,7 @@ package com.DSfinal.Venue;
 
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -15,6 +16,16 @@ public class VenueService {
 
     public List<VenueHall> getAllVenues() {
         return repository.findAll();
+    }
+
+    public List<VenueHall> getAvailableVenues(String date) {
+
+        return repository.findAll()
+                .stream()
+                .filter(v ->
+                        v.getReservations() == null ||
+                                !v.getReservations().contains(date))
+                .toList();
     }
 
     public VenueHall getVenueById(String id) {
@@ -35,65 +46,21 @@ public class VenueService {
                     "Venue not found");
         }
 
-        if (hall.getStatus() != VenueStatus.AVAILABLE) {
-            return new ReserveResponse(false,
-                    "Venue not available");
+        if (hall.getReservations() == null) {
+            hall.setReservations(new ArrayList<>());
         }
 
-        if (request.getGuests() > hall.getCapacity()) {
+        if (hall.getReservations().contains(request.getDate())) {
+
             return new ReserveResponse(false,
-                    "Too many guests");
+                    "Venue already booked for this date");
         }
 
-        hall.setStatus(VenueStatus.RESERVED);
+        hall.getReservations().add(request.getDate());
 
         repository.save(hall);
 
         return new ReserveResponse(true,
                 "Venue reserved successfully");
-    }
-
-    public ReserveResponse cancelReservation(String id) {
-
-        VenueHall hall = repository.findById(id);
-
-        if (hall == null) {
-            return new ReserveResponse(false,
-                    "Venue not found");
-        }
-
-        hall.setStatus(VenueStatus.AVAILABLE);
-
-        repository.save(hall);
-
-        return new ReserveResponse(true,
-                "Reservation cancelled");
-    }
-
-    public ReserveResponse confirmReservation(String id) {
-
-        VenueHall hall = repository.findById(id);
-
-        if (hall == null) {
-
-            return new ReserveResponse(
-                    false,
-                    "Venue not found");
-        }
-
-        if (hall.getStatus() != VenueStatus.RESERVED) {
-
-            return new ReserveResponse(
-                    false,
-                    "Venue must first be RESERVED");
-        }
-
-        hall.setStatus(VenueStatus.CONFIRMED);
-
-        repository.save(hall);
-
-        return new ReserveResponse(
-                true,
-                "Reservation confirmed");
     }
 }

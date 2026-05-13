@@ -18,7 +18,6 @@ public class CombinedOption {
         this.venueName = venue.getName();
         this.cateringName = catering.getName();
         this.totalPrice = venue.getPricePerDay() + catering.getPricePerPerson();
-        this.available = venue.isAvailable() && catering.isAvailable();
         this.cateringMaxGuests = catering.getMaxGuests();
         this.venueMaxGuests= venue.getCapacity();
     }

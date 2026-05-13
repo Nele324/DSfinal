@@ -4,6 +4,7 @@ public class ReserveRequest {
 
     private String cateringId;
     private int guests;
+    private String date;
 
     public String getCateringId() {
         return cateringId;
@@ -20,4 +21,8 @@ public class ReserveRequest {
     public void setGuests(int guests) {
         this.guests = guests;
     }
+
+    public String getDate() { return date; }
+
+    public void setDate(String date) { this.date = date; }
 }

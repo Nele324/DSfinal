@@ -6,6 +6,7 @@ public class OrderRequest {
     private String selectedCatering;
     private String address;
     private String cardNumber;
+    private String date;
 
     public String getSelectedVenue() {
         return selectedVenue;
@@ -38,4 +39,8 @@ public class OrderRequest {
     public void setCardNumber(String cardNumber) {
         this.cardNumber = cardNumber;
     }
+
+    public String getDate() { return date; }
+
+    public void setDate(String date) { this.date = date; }
 }

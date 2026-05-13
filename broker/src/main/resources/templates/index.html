@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Event Planner</title>
+
     <style>
-        /* --- General Reset & Layout --- */
         :root {
             --primary: #2c3e50;
             --accent: #3498db;
@@ -19,7 +19,6 @@
             color: #333;
         }
 
-        /* --- Header & Burger Menu --- */
         header {
             background: var(--primary);
             color: white;
@@ -47,7 +46,6 @@
             border-radius: 2px;
         }
 
-        /* --- Scrollable Sections --- */
         .main-container {
             max-width: 1200px;
             margin: 2rem auto;
@@ -65,21 +63,20 @@
             border-radius: 12px;
             padding: 1.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            height: 400px; /* Fixed height */
-            overflow-y: auto; /* Makes it scrollable */
+            height: 400px;
+            overflow-y: auto;
             border: 1px solid #ddd;
         }
 
-        /* Custom Scrollbar Styling */
         .scroll-box::-webkit-scrollbar {
             width: 8px;
         }
+
         .scroll-box::-webkit-scrollbar-thumb {
             background: #ccc;
             border-radius: 4px;
         }
 
-        /* --- Item Cards --- */
         .item-card {
             border: 1px solid #eee;
             margin-bottom: 1rem;
@@ -96,10 +93,16 @@
             background-color: #f9fcff;
         }
 
-        .item-details h4 { margin: 0; color: var(--primary); }
-        .item-price { font-weight: bold; color: var(--success); }
+        .item-details h4 {
+            margin: 0;
+            color: var(--primary);
+        }
 
-        /* --- Checkout Form --- */
+        .item-price {
+            font-weight: bold;
+            color: var(--success);
+        }
+
         .checkout-section {
             background: white;
             margin-top: 2rem;
@@ -112,7 +115,8 @@
             margin-bottom: 1rem;
         }
 
-        input[type="text"] {
+        input[type="text"],
+        input[type="date"] {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
@@ -133,7 +137,9 @@
             transition: opacity 0.3s;
         }
 
-        .btn-order:hover { opacity: 0.9; }
+        .btn-order:hover {
+            opacity: 0.9;
+        }
 
         .status-badge {
             background: rgba(255,255,255,0.2);
@@ -141,18 +147,31 @@
             border-radius: 20px;
             font-size: 0.8rem;
         }
+
+        .date-box {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
+
 <body>
 
 <header>
     <div>
         <h2 style="margin:0;">EventFlow Broker</h2>
     </div>
+
     <div class="status-badge">
-        System Status: <span th:text="${status}">Online</span>
+        System Status:
+        <span th:text="${status}">Online</span>
     </div>
-    <div class="burger-menu" th:onclick="|window.location.href='@{/manager/login}'|">
+
+    <div class="burger-menu"
+         th:onclick="|window.location.href='@{/manager/login}'|">
         <div></div>
         <div></div>
         <div></div>
@@ -160,64 +179,148 @@
 </header>
 
 <div class="main-container">
+
+    <!-- DATE SELECTOR -->
+    <div class="date-box">
+        <form method="get" action="/">
+            <label>
+                <strong>Select Event Date:</strong>
+            </label>
+
+            <input type="date"
+                   name="date"
+                   th:value="${selectedDate}"
+                   onchange="this.form.submit()">
+        </form>
+    </div>
+
+    <!-- ORDER FORM -->
     <form th:action="@{/broker/confirm-order}" method="post">
 
+        <!-- HIDDEN DATE -->
+        <input type="hidden"
+               name="date"
+               th:value="${selectedDate}">
+
         <div class="selection-grid">
+
+            <!-- CATERING -->
             <div>
                 <h3>1. Select Catering</h3>
+
                 <div class="scroll-box">
-                    <div class="item-card" th:each="item : ${cateringPackages}">
+
+                    <div class="item-card"
+                         th:each="item : ${cateringPackages}">
+
                         <div class="item-details">
-                            <h4 th:text="${item.name}">Package Name</h4>
-                            <small th:text="'Max Guests: ' + ${item.maxGuests}">0</small>
+                            <h4 th:text="${item.name}">
+                                Package Name
+                            </h4>
+
+                            <small th:text="'Max Guests: ' + ${item.maxGuests}">
+                                0
+                            </small>
                         </div>
+
                         <div style="text-align: right;">
-                            <div class="item-price" th:text="'$' + ${item.pricePerPerson}">$0</div>
-                            <input type="radio" name="selectedCatering" th:value="${item.id}" required>
+
+                            <div class="item-price"
+                                 th:text="'$' + ${item.pricePerPerson}">
+                                $0
+                            </div>
+
+                            <input type="radio"
+                                   name="selectedCatering"
+                                   th:value="${item.id}"
+                                   required>
                         </div>
                     </div>
+
                 </div>
             </div>
 
+            <!-- VENUES -->
             <div>
                 <h3>2. Select Venue</h3>
+
                 <div class="scroll-box">
-                    <div class="item-card" th:each="hall : ${venues}">
+
+                    <div class="item-card"
+                         th:each="hall : ${venues}">
+
                         <div class="item-details">
-                            <h4 th:text="${hall.name}">Hall Name</h4>
-                            <small th:text="'Capacity: ' + ${hall.capacity}">0</small>
+
+                            <h4 th:text="${hall.name}">
+                                Hall Name
+                            </h4>
+
+                            <small th:text="'Capacity: ' + ${hall.capacity}">
+                                0
+                            </small>
                         </div>
+
                         <div style="text-align: right;">
-                            <div class="item-price" th:text="'$' + ${hall.pricePerDay}">$0</div>
-                            <input type="radio" name="selectedVenue" th:value="${hall.id}" required>
+
+                            <div class="item-price"
+                                 th:text="'$' + ${hall.pricePerDay}">
+                                $0
+                            </div>
+
+                            <input type="radio"
+                                   name="selectedVenue"
+                                   th:value="${hall.id}"
+                                   required>
                         </div>
                     </div>
+
                 </div>
             </div>
+
         </div>
 
+        <!-- CHECKOUT -->
         <div class="checkout-section">
-            <h3>3. Finalize Booking</h3>
+
+            <h3>
+                3. Finalize Booking
+            </h3>
+
+            <p>
+                Booking date:
+                <strong th:text="${selectedDate}"></strong>
+            </p>
+
             <div class="selection-grid">
+
                 <div class="form-group">
                     <label>Event Address</label>
-                    <input type="text" name="address" placeholder="123 Azure Way, Cloud City" required>
+
+                    <input type="text"
+                           name="address"
+                           placeholder="123 Azure Way, Cloud City"
+                           required>
                 </div>
+
                 <div class="form-group">
                     <label>Payment Card Number (Simulated)</label>
-                    <input type="text" name="cardNumber" placeholder="4444 5555 6666 7777" required>
-                </div>
-            </div>
-            <button type="submit" class="btn-order">Place Atomic Order</button>
-        </div>
 
-        <div class="burger-menu" onclick="window.location.href='/manager/login'">
-            <div></div>
-            <div></div>
-            <div></div>
+                    <input type="text"
+                           name="cardNumber"
+                           placeholder="4444 5555 6666 7777"
+                           required>
+                </div>
+
+            </div>
+
+            <button type="submit" class="btn-order">
+                Place Atomic Order
+            </button>
+
         </div>
 
     </form>
+
 </div>
 
 </body>

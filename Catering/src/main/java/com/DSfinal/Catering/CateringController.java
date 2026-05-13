@@ -13,73 +13,43 @@ public class CateringController {
 
     private final CateringService cateringService;
 
-    public CateringController(CateringService cateringService) {
+    public CateringController(
+            CateringService cateringService) {
+
         this.cateringService = cateringService;
     }
 
-    @GetMapping
-    public ResponseEntity<String> home() {
-        return ResponseEntity.ok("Catering service is running");
-    }
-
     @GetMapping("/options")
-    public ResponseEntity<List<CateringOption>> getAllOptions() {
-        return ResponseEntity.ok(cateringService.getAllOptions());
-    }
+    public ResponseEntity<List<CateringOption>>
+    getAllOptions(
+            @RequestParam(required = false)
+            String date) {
 
-    @GetMapping("/options/{id}")
-    public ResponseEntity<?> getOptionById(@PathVariable String id) {
+        if (date == null) {
 
-        CateringOption option =
-                cateringService.getOptionById(id);
-
-        if (option == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Catering option not found");  
+            return ResponseEntity.ok(
+                    cateringService.getAllPackages()
+            );
         }
 
-        return ResponseEntity.ok(option);
+        return ResponseEntity.ok(
+                cateringService
+                        .getAvailablePackages(date)
+        );
     }
 
     @PostMapping("/reserve")
-    public ResponseEntity<ReserveResponse> reserve(
+    public ResponseEntity<ReserveResponse>
+    reserve(
             @RequestBody ReserveRequest request) {
 
         ReserveResponse response =
-                cateringService.reserveCatering(request);
+                cateringService
+                        .reservePackage(request);
 
         if (!response.isSuccess()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(response);
-        }
 
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/cancel/{id}")
-    public ResponseEntity<ReserveResponse> cancelReservation(
-            @PathVariable String id) {
-
-        ReserveResponse response =
-                cateringService.cancelReservation(id);
-
-        if (!response.isSuccess()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(response);
-        }
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/confirm/{id}")
-    public ResponseEntity<ReserveResponse> confirmReservation(
-            @PathVariable String id) {
-
-        ReserveResponse response =
-                cateringService.confirmReservation(id);
-
-        if (!response.isSuccess()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.badRequest()
                     .body(response);
         }
 
