@@ -8,6 +8,7 @@ public class OrderRequest {
     private String cardNumber;
     private String date;
 
+
     public String getSelectedVenue() {
         return selectedVenue;
     }

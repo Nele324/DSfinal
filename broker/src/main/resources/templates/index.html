@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Event Planner</title>
-
     <style>
         :root {
             --primary: #2c3e50;
@@ -125,7 +124,7 @@
             box-sizing: border-box;
         }
 
-        .btn-order {
+        .btn-review {
             background: var(--success);
             color: white;
             border: none;
@@ -137,7 +136,7 @@
             transition: opacity 0.3s;
         }
 
-        .btn-order:hover {
+        .btn-review:hover {
             opacity: 0.9;
         }
 
@@ -179,7 +178,10 @@
 </header>
 
 <div class="main-container">
-
+    <div class="filter-section" style="margin-bottom: 20px; background: white; padding: 1rem; border-radius: 12px;">
+        <label for="guestCount"><strong>How many guests are attending?</strong></label>
+        <input type="number" id="guestCount" placeholder="e.g. 50" oninput="filterOptions()" style="width: 200px; padding: 8px;">
+    </div>
     <!-- DATE SELECTOR -->
     <div class="date-box">
         <form method="get" action="/">
@@ -195,7 +197,7 @@
     </div>
 
     <!-- ORDER FORM -->
-    <form th:action="@{/broker/confirm-order}" method="post">
+    <form th:action="@{/broker/review-order}" method="post">
 
         <!-- HIDDEN DATE -->
         <input type="hidden"
@@ -210,8 +212,13 @@
 
                 <div class="scroll-box">
 
-                    <div class="item-card"
-                         th:each="item : ${cateringPackages}">
+                    <div id="catering-empty-msg" style="display: none; text-align: center; padding: 20px; color: #7f8c8d;">
+                        <p>🚫 <strong>Sorry!</strong> No catering service is large enough for your guest count.</p>
+                    </div>
+
+                    <div class="item-card catering-card"
+                         th:each="item : ${cateringPackages}"
+                         th:attr="data-max=${item.maxGuests}">
 
                         <div class="item-details">
                             <h4 th:text="${item.name}">
@@ -233,6 +240,7 @@
                             <input type="radio"
                                    name="selectedCatering"
                                    th:value="${item.id}"
+                                   onclick="handleRadioClick(this)"
                                    required>
                         </div>
                     </div>
@@ -246,18 +254,18 @@
 
                 <div class="scroll-box">
 
-                    <div class="item-card"
-                         th:each="hall : ${venues}">
+                    <div id="venue-empty-msg" style="display: none; text-align: center; padding: 20px; color: #7f8c8d;">
+                        <p>🚫 <strong>Sorry!</strong> No venues are large enough for your guest count.</p>
+                    </div>
+
+                    <div class="item-card venue-card"
+                         th:each="hall : ${venues}"
+                         th:attr="data-capacity=${hall.capacity}">
 
                         <div class="item-details">
 
-                            <h4 th:text="${hall.name}">
-                                Hall Name
-                            </h4>
-
-                            <small th:text="'Capacity: ' + ${hall.capacity}">
-                                0
-                            </small>
+                            <h4 th:text="${hall.name}">Hall Name</h4>
+                            <small th:text="'MaxGuests: ' + ${hall.capacity}">0</small>
                         </div>
 
                         <div style="text-align: right;">
@@ -270,6 +278,7 @@
                             <input type="radio"
                                    name="selectedVenue"
                                    th:value="${hall.id}"
+                                   onclick="handleRadioClick(this)"
                                    required>
                         </div>
                     </div>
@@ -279,49 +288,18 @@
 
         </div>
 
-        <!-- CHECKOUT -->
         <div class="checkout-section">
-
-            <h3>
-                3. Finalize Booking
-            </h3>
-
-            <p>
-                Booking date:
-                <strong th:text="${selectedDate}"></strong>
-            </p>
-
-            <div class="selection-grid">
-
-                <div class="form-group">
-                    <label>Event Address</label>
-
-                    <input type="text"
-                           name="address"
-                           placeholder="123 Azure Way, Cloud City"
-                           required>
-                </div>
-
-                <div class="form-group">
-                    <label>Payment Card Number (Simulated)</label>
-
-                    <input type="text"
-                           name="cardNumber"
-                           placeholder="4444 5555 6666 7777"
-                           required>
-                </div>
-
-            </div>
-
-            <button type="submit" class="btn-order">
-                Place Atomic Order
-            </button>
-
+            <h3>3. Review Selection</h3>
+            <p>Click below to see your total price and confirm details.</p>
+            <button type="submit" class="btn-review">Proceed to Review</button>
         </div>
 
     </form>
 
+
+
 </div>
 
+<script th:src="@{/js/index.js}"></script>
 </body>
 </html>

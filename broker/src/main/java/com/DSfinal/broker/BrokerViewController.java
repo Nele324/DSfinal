@@ -92,7 +92,7 @@ public class BrokerViewController {
                             request.getDate());
 
             if (vRes && cRes) {
-                // this is where Lotte will add the
+                // this is where Lotte will handle the data addition to the database
 
                 model.addAttribute("message", "Order Placed Successfully!");
                 return "order-success";
@@ -105,22 +105,34 @@ public class BrokerViewController {
         }
     }
 
-    @GetMapping("/manager/login")
-    public String showManagerLogin() {
-        return "manager-login"; // This looks for manager-login.html in /templates/
-    }
 
-    @PostMapping("/manager/login")
-    public String processLogin(@RequestParam String username,
-                               @RequestParam String password,
-                               Model model) {
-        // Simple hardcoded check for now
-        if ("admin".equals(username) && "password123".equals(password)) {
-            return "redirect:/manager/dashboard"; // You'll create this dashboard next!
-        } else {
-            model.addAttribute("error", "Invalid Credentials!");
-            return "manager-login";
-        }
+    @PostMapping("/broker/review-order")
+    public String reviewOrder(OrderRequest request, Model model) {
+        // Reuse the logic Lotte already wrote to get the fresh data
+        AvailablePackagesResponse data = apiController.getAvailablePackages(request.getDate());
+
+        // Find the Venue object that matches the ID the user picked
+        VenueHall selectedVenue = data.getVenues().stream()
+                .filter(v -> v.getId().equals(request.getSelectedVenue()))
+                .findFirst()
+                .orElse(null);
+
+        // Find the Catering object
+        CateringPackage selectedCatering = data.getCateringPackages().stream()
+                .filter(c -> c.getId().equals(request.getSelectedCatering()))
+                .findFirst()
+                .orElse(null);
+
+        // Pass the WHOLE objects to the page, not just IDs
+        model.addAttribute("venue", selectedVenue);
+        model.addAttribute("catering", selectedCatering);
+        model.addAttribute("orderRequest", request); // Keeps address/card info
+
+        // Calculate total on the fly
+        double total = selectedVenue.getPricePerDay() + selectedCatering.getPricePerPerson();
+        model.addAttribute("totalPrice", total);
+
+        return "review";
     }
 
 }

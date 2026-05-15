@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Portal | Orders</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 2rem; background: #f4f6f8; }
+        h1 { color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        th { background: #34495e; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #ecf0f1; }
+        tr:last-child td { border-bottom: none; }
+        .logout { float: right; color: #e74c3c; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<h1>All Orders
+    <a href="index.html" class="logout">Logout</a>
+</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th>Order ID</th>
+        <th>Venue</th>
+        <th>Catering</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="order : ${orders}">
+        <td th:text="${order.id}"></td>
+        <td th:text="${order.venueId}"></td>
+        <td th:text="${order.cateringId}"></td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

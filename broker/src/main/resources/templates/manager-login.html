@@ -81,13 +81,18 @@
     <div th:if="${error}" class="error-msg" th:text="${error}"></div>
 
     <form th:action="@{/manager/login}" method="post">
+        <!--        csrf(cross-site request forgery) requires every form post to -->
+        <!--        include a secret token that only the server knows-->
+        <!--        spring security adds this automatically-->
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
         <div class="form-group">
             <label>Username</label>
-            <input type="text" name="username" required autocomplete="off">
+            <input type="text" name="username" required autocomplete="off"/>
         </div>
         <div class="form-group">
             <label>Security Key</label>
-            <input type="password" name="password" required>
+            <input type="password" name="password" required/>
         </div>
         <button type="submit" class="btn-login">Authenticate</button>
     </form>

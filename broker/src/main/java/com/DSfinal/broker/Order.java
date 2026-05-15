@@ -5,6 +5,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 
+
+//!!! IF more columns are added to the order table
+// REMEMBER to update in manager-view-orders.html -->
 @Entity
 @Table(name = "Orders")
 public class Order {
