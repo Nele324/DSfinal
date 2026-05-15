@@ -8,16 +8,18 @@ public class VenueHall {
     private String name;
     private int capacity;
     private double pricePerDay;
-    private List<String> reservations;
+    private List<String> pendingReservations;
+    private List<String> confirmedReservations;
 
     public VenueHall() {}
 
-    public VenueHall(String id, String name, int capacity, double pricePerDay, List<String> reservations) {
+    public VenueHall(String id, String name, int capacity, double pricePerDay, List<String> pendingReservations, List<String> confirmedReservations) {
         this.id = id;
         this.name = name;
         this.capacity = capacity;
         this.pricePerDay = pricePerDay;
-        this.reservations = reservations;
+        this.pendingReservations = pendingReservations;
+        this.confirmedReservations = confirmedReservations;
     }
 
     public String getId() { return id; }
@@ -32,6 +34,9 @@ public class VenueHall {
     public double getPricePerDay() { return pricePerDay; }
     public void setPricePerDay(double pricePerDay) { this.pricePerDay = pricePerDay; }
 
-    public List<String> getReservations() { return reservations; }
-    public void setReservations(List<String> reservations) { this.reservations = reservations; }
+    public List<String> getPendingReservations() { return pendingReservations; }
+    public void setPendingReservations(List<String> pendingReservations) { this.pendingReservations = pendingReservations; }
+
+    public List<String> getConfirmedReservations() { return confirmedReservations; }
+    public void setConfirmedReservations(List<String> confirmedReservations) { this.confirmedReservations = confirmedReservations; }
 }

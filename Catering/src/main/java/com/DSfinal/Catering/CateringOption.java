@@ -14,17 +14,19 @@ public class CateringOption {
     private String name;
     private int maxGuests;
     private double pricePerPerson;
-    private List<String> reservations;
+    private List<String> pendingReservations;
+    private List<String> confirmedReservations;
 
     public CateringOption() {
     }
 
-    public CateringOption(String id, String name, int maxGuests, double pricePerPerson, List<String> reservations) {
+    public CateringOption(String id, String name, int maxGuests, double pricePerPerson, List<String> pendingReservations, List<String> confirmedReservations) {
         this.id = id;
         this.name = name;
         this.maxGuests = maxGuests;
         this.pricePerPerson = pricePerPerson;
-        this.reservations = reservations;
+        this.pendingReservations = pendingReservations;
+        this.confirmedReservations = confirmedReservations;
     }
 
     public String getId() {
@@ -59,7 +61,9 @@ public class CateringOption {
         this.pricePerPerson = pricePerPerson;
     }
 
-    public List<String> getReservations() { return reservations; }
+    public List<String> getPendingReservations() { return pendingReservations; }
+    public void setPendingReservations(List<String> pendingReservations) { this.pendingReservations = pendingReservations; }
 
-    public void setReservations(List<String> reservations) { this.reservations = reservations; }
+    public List<String> getConfirmedReservations() { return confirmedReservations; }
+    public void setConfirmedReservations(List<String> confirmedReservations) { this.confirmedReservations = confirmedReservations; }
 }

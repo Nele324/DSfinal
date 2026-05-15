@@ -13,44 +13,73 @@ public class CateringController {
 
     private final CateringService cateringService;
 
-    public CateringController(
-            CateringService cateringService) {
-
+    public CateringController(CateringService cateringService) {
         this.cateringService = cateringService;
     }
 
     @GetMapping("/options")
-    public ResponseEntity<List<CateringOption>>
-    getAllOptions(
-            @RequestParam(required = false)
-            String date) {
+    public ResponseEntity<List<CateringOption>> getAllOptions(
+            @RequestParam(required = false) String date) {
 
         if (date == null) {
-
-            return ResponseEntity.ok(
-                    cateringService.getAllPackages()
-            );
+            return ResponseEntity.ok(cateringService.getAllPackages());
         }
 
-        return ResponseEntity.ok(
-                cateringService
-                        .getAvailablePackages(date)
-        );
+        return ResponseEntity.ok(cateringService.getAvailablePackages(date));
+    }
+
+    @GetMapping("/options/{id}")
+    public ResponseEntity<?> getOptionById(@PathVariable String id) {
+
+        CateringOption option = cateringService.getCateringById(id);
+
+        if (option == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Catering option not found");
+        }
+
+        return ResponseEntity.ok(option);
     }
 
     @PostMapping("/reserve")
-    public ResponseEntity<ReserveResponse>
-    reserve(
+    public ResponseEntity<ReserveResponse> reserve(
             @RequestBody ReserveRequest request) {
 
         ReserveResponse response =
-                cateringService
-                        .reservePackage(request);
+                cateringService.reservePackage(request);
 
         if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
 
-            return ResponseEntity.badRequest()
-                    .body(response);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<ReserveResponse> cancel(
+            @RequestParam String cateringId,
+            @RequestParam String date) {
+
+        ReserveResponse response =
+                cateringService.cancelReservation(cateringId, date);
+
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<ReserveResponse> confirm(
+            @RequestParam String cateringId,
+            @RequestParam String date) {
+
+        ReserveResponse response =
+                cateringService.confirmReservation(cateringId, date);
+
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         return ResponseEntity.ok(response);

@@ -15,60 +15,107 @@ public class CateringService {
     }
 
     public List<CateringOption> getAllPackages() {
-
         return repository.findAll();
     }
 
-    public List<CateringOption> getAvailablePackages(
-            String date) {
+    public List<CateringOption> getAvailablePackages(String date) {
 
         return repository.findAll()
                 .stream()
-                .filter(c ->
-                        c.getReservations() == null ||
-                                !c.getReservations().contains(date))
+                .filter(c -> {
+
+                    boolean pending =
+                            c.getPendingReservations() != null &&
+                                    c.getPendingReservations().contains(date);
+
+                    boolean confirmed =
+                            c.getConfirmedReservations() != null &&
+                                    c.getConfirmedReservations().contains(date);
+
+                    return !pending && !confirmed;
+                })
                 .toList();
     }
 
+    public CateringOption getCateringById(String id) {
+        return repository.findById(id);
+    }
 
-    public ReserveResponse reservePackage(
-            ReserveRequest request) {
+    public CateringOption saveCatering(CateringOption catering) {
+        return repository.save(catering);
+    }
+
+    public ReserveResponse reservePackage(ReserveRequest request) {
 
         CateringOption catering =
                 repository.findById(request.getCateringId());
 
         if (catering == null) {
-
-            return new ReserveResponse(
-                    false,
-                    "Catering not found"
-            );
+            return new ReserveResponse(false, "Catering not found");
         }
 
-        if (catering.getReservations() == null) {
-
-            catering.setReservations(
-                    new ArrayList<>()
-            );
+        if (catering.getPendingReservations() == null) {
+            catering.setPendingReservations(new ArrayList<>());
         }
 
-        if (catering.getReservations()
-                .contains(request.getDate())) {
-
-            return new ReserveResponse(
-                    false,
-                    "Catering already booked for this date"
-            );
+        if (catering.getConfirmedReservations() == null) {
+            catering.setConfirmedReservations(new ArrayList<>());
         }
 
-        catering.getReservations()
-                .add(request.getDate());
+        boolean alreadyPending =
+                catering.getPendingReservations().contains(request.getDate());
+
+        boolean alreadyConfirmed =
+                catering.getConfirmedReservations().contains(request.getDate());
+
+        if (alreadyPending || alreadyConfirmed) {
+            return new ReserveResponse(false, "Already reserved");
+        }
+
+        catering.getPendingReservations().add(request.getDate());
+        repository.save(catering);
+
+        return new ReserveResponse(true, "Catering temporarily reserved");
+    }
+
+    public ReserveResponse confirmReservation(String cateringId, String date) {
+
+        CateringOption catering = repository.findById(cateringId);
+
+        if (catering == null) {
+            return new ReserveResponse(false, "Catering not found");
+        }
+
+        if (catering.getPendingReservations() == null) {
+            catering.setPendingReservations(new ArrayList<>());
+        }
+
+        if (catering.getConfirmedReservations() == null) {
+            catering.setConfirmedReservations(new ArrayList<>());
+        }
+
+        catering.getPendingReservations().remove(date);
+        catering.getConfirmedReservations().add(date);
 
         repository.save(catering);
 
-        return new ReserveResponse(
-                true,
-                "Catering reserved successfully"
-        );
+        return new ReserveResponse(true, "Catering confirmed");
+    }
+
+    public ReserveResponse cancelReservation(String cateringId, String date) {
+
+        CateringOption catering = repository.findById(cateringId);
+
+        if (catering == null) {
+            return new ReserveResponse(false, "Catering not found");
+        }
+
+        if (catering.getPendingReservations() != null) {
+            catering.getPendingReservations().remove(date);
+        }
+
+        repository.save(catering);
+
+        return new ReserveResponse(true, "Catering cancelled");
     }
 }
