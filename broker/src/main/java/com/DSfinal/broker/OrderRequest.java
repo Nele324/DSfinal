@@ -2,12 +2,21 @@ package com.DSfinal.broker;
 
 //this is a Data Object
 public class OrderRequest {
+    private String orderId;
     private String selectedVenue;
     private String selectedCatering;
     private String address;
     private String cardNumber;
     private String date;
+    private double totalPrice;
 
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
 
     public String getSelectedVenue() {
         return selectedVenue;
@@ -41,7 +50,19 @@ public class OrderRequest {
         this.cardNumber = cardNumber;
     }
 
-    public String getDate() { return date; }
+    public String getDate() {
+        return date;
+    }
 
-    public void setDate(String date) { this.date = date; }
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(double totalPrice) {
+        this.totalPrice = totalPrice;
+    }
 }

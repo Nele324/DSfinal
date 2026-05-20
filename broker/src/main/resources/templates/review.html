@@ -85,6 +85,7 @@
         <p><strong>Venue:</strong> <span th:text="${venue.name}">Grand Ballroom</span></p>
         <p><strong>Catering:</strong> <span th:text="${catering.name}">Luxury Buffet</span></p>
         <p><strong>Delivery Address:</strong> <span th:text="${orderRequest.address}">Address</span></p>
+        <p><strong>Card Number:</strong> <span th:text="${orderRequest.cardNumber}">**** **** **** 1234</span></p>
         <hr>
         <h2 style="color: #27ae60;">Total Price: $<span th:text="${totalPrice}">0.00</span></h2>
     </div>
@@ -93,11 +94,13 @@
         <button onclick="window.history.back()" class="btn-review" style="background: #7f8c8d; width: 200px;">Go Back & Change</button>
 
         <form th:action="@{/broker/confirm-order}" method="post" style="flex-grow: 1;">
+            <input type="hidden" name="orderId" th:value="${orderId}">
             <input type="hidden" name="selectedVenue" th:value="${orderRequest.selectedVenue}">
             <input type="hidden" name="selectedCatering" th:value="${orderRequest.selectedCatering}">
             <input type="hidden" name="address" th:value="${orderRequest.address}">
             <input type="hidden" name="cardNumber" th:value="${orderRequest.cardNumber}">
             <input type="hidden" name="date" th:value="${orderRequest.date}">
+            <input type="hidden" name="totalPrice" th:value="${totalPrice}">
 
             <button type="submit" class="btn-review" id="confirmBtn" style="width: 100%;">Confirm & Pay</button>
         </form>

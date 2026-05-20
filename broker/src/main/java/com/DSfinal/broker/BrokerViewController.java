@@ -11,11 +11,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Collections;
 import java.util.List;
 import java.time.LocalDate;
+import java.util.UUID;
+import java.util.Optional;
 
 @Controller
 public class BrokerViewController {
@@ -41,7 +44,11 @@ public class BrokerViewController {
     @Value("${venue.service.url}")
     private String venueServiceUrl;
 
+    @Autowired
     private final BrokerController apiController;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     // We inject the existing logic so we don't have to rewrite it
     public BrokerViewController(BrokerController apiController) {
@@ -79,23 +86,36 @@ public class BrokerViewController {
     //to satisfy ACID requirements
     //to ensure that if one part of the order fails the other is NOT finalized
     @PostMapping("/broker/confirm-order")
-    public String confirmOrder(OrderRequest request, Model model) {
+    public String confirmOrder(@RequestParam("orderId") String orderId,
+                               @RequestParam("selectedVenue") String selectedVenue,
+                               @RequestParam("selectedCatering") String selectedCatering,
+                               @RequestParam("date") String date,
+                               Model model) {
         try {
             // Use the logic already defined in the apiController
             boolean vRes =
-                    apiController.reserveVenue(
-                            request.getSelectedVenue(),
-                            request.getDate());
+                    apiController.confirmVenue(
+                            selectedVenue,
+                            date);
             boolean cRes =
-                    apiController.reserveCatering(
-                            request.getSelectedCatering(),
-                            request.getDate());
+                    apiController.confirmCatering(
+                            selectedCatering,
+                            date);
 
             if (vRes && cRes) {
-                // this is where Lotte will handle the data addition to the database
+                Optional<Order> existingOrderOpt = orderRepository.findById(orderId);
 
-                model.addAttribute("message", "Order Placed Successfully!");
-                return "order-success";
+                if (existingOrderOpt.isPresent()) {
+                    Order order = existingOrderOpt.get();
+                    order.setStatus("CONFIRMED");
+
+                    saveOrderToDatabase(order);
+                    model.addAttribute("message", "Order Placed Successfully!");
+                    return "order-success";
+                } else {
+                    model.addAttribute("error", "Order not found in database.");
+                    return "order-failed";
+                }
             } else {
                 throw new Exception("One of the suppliers declined.");
             }
@@ -103,6 +123,12 @@ public class BrokerViewController {
             model.addAttribute("error", "Transaction Failed: " + e.getMessage());
             return "order-failed";
         }
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void saveOrderToDatabase(Order order) {
+        orderRepository.save(order);
+        orderRepository.flush();
     }
 
 
@@ -123,16 +149,58 @@ public class BrokerViewController {
                 .findFirst()
                 .orElse(null);
 
-        // Pass the WHOLE objects to the page, not just IDs
-        model.addAttribute("venue", selectedVenue);
-        model.addAttribute("catering", selectedCatering);
-        model.addAttribute("orderRequest", request); // Keeps address/card info
+        if (selectedVenue == null || selectedCatering == null) {
+            model.addAttribute("error", "Selected options are no longer available. Please try again.");
+            return "order-failed";
+        }
 
-        // Calculate total on the fly
-        double total = selectedVenue.getPricePerDay() + selectedCatering.getPricePerPerson();
-        model.addAttribute("totalPrice", total);
+        double total = selectedVenue.getPricePerDay() + selectedCatering.getPricePerPerson()*selectedVenue.getCapacity();
+        String orderId = UUID.randomUUID().toString(); // Generate a unique order ID for this review session
 
-        return "review";
+        try {
+            boolean vRes = apiController.reserveVenue(request.getSelectedVenue(), request.getDate());
+            boolean cRes = apiController.reserveCatering(request.getSelectedCatering(), request.getDate());
+
+            if (vRes && cRes) {
+                Order reservedOrder = new Order();
+            
+                reservedOrder.setId(orderId);
+                
+                reservedOrder.setVenueId(request.getSelectedVenue());
+                reservedOrder.setCateringId(request.getSelectedCatering());
+                reservedOrder.setStatus("RESERVED");
+                reservedOrder.setTotalPrice(total);
+                reservedOrder.setAddress(request.getAddress());
+                reservedOrder.setCardNumber(request.getCardNumber());
+                
+                java.util.Date orderDate;
+                try {
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                    orderDate = sdf.parse(request.getDate());
+                    reservedOrder.setDate(orderDate);
+                } catch (Exception e) {
+                    reservedOrder.setDate(new java.util.Date());
+                }
+
+                saveOrderToDatabase(reservedOrder);
+
+                // Pass the WHOLE objects to the page, not just IDs
+                model.addAttribute("venue", selectedVenue);
+                model.addAttribute("catering", selectedCatering);
+                model.addAttribute("orderRequest", request); // Keeps address/card info
+                model.addAttribute("totalPrice", total);
+                model.addAttribute("orderId", orderId); 
+                model.addAttribute("date", request.getDate());
+                model.addAttribute("address", request.getAddress());
+                model.addAttribute("cardNumber", request.getCardNumber());
+                return "review";
+            } else {
+                throw new Exception("One of the suppliers declined.");
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Transaction Failed: " + e.getMessage());
+            return "order-failed";
+        }
     }
 
 }

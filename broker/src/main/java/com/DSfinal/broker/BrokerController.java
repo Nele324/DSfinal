@@ -12,9 +12,14 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequestMapping("/broker")
 public class BrokerController {
+
+    private static final Logger log = LoggerFactory.getLogger(BrokerController.class);
 
     //@autowired it to get the RestTemplate Bean object we created
     //in RestTemplateConfig.java
@@ -37,8 +42,6 @@ public class BrokerController {
     // I am not sure why we need to get all combinations
     @GetMapping("/all-combinations")
     public List<CombinedOption> getAllCombinations() {
-        // Gebruik de variabelen uit application.properties in plaats van hardcoded "localhost"
-        // Let op: zorg dat de paden (/venue/halls) overeenkomen met de Controllers in die services
         VenueHall[] venues = restTemplate.getForObject(venueServiceUrl + "/venue/halls", VenueHall[].class);
         CateringPackage[] caterings = restTemplate.getForObject(cateringServiceUrl + "/catering/options", CateringPackage[].class);
 
@@ -62,11 +65,12 @@ public class BrokerController {
     //this is just putting the order in broker's database
     @PostMapping("/place-order")
     public ResponseEntity<String> placeOrder(@RequestBody Order orderRequest) {
+        log.info("Received order request: {}", orderRequest);
         try {
-            // We slaan het object direct op in Azure SQL
             orderRepository.save(orderRequest);
             return ResponseEntity.ok("Order succesvol opgeslagen met ID: " + orderRequest.getId());
         } catch (Exception e) {
+            log.error("Fout bij opslaan order", e);
             return ResponseEntity.status(500).body("Fout bij opslaan order: " + e.getMessage());
         }
     }
@@ -91,9 +95,16 @@ public class BrokerController {
                     ? Arrays.asList(catArray)
                     : Collections.emptyList();
 
+            log.info("Catering packages ontvangen: {}", cateringPackages.size());
+            for (CateringPackage c : cateringPackages) {
+                log.info("  - Catering: ID={}, Naam={}, MaxGuests={}, Prijs per persoon: ${}", 
+                    c.getId(), c.getName(), c.getMaxGuests(), c.getPricePerPerson());
+            }
+
         } catch (Exception e) {
 
             System.err.println("Catering error: " + e.getMessage());
+            log.error("Fout bij ophalen catering packages", e);
 
             cateringPackages = Collections.emptyList();
         }
@@ -113,9 +124,16 @@ public class BrokerController {
                     ? Arrays.asList(venArray)
                     : Collections.emptyList();
 
+            log.info("Venues ontvangen: {}", venues.size());
+            for (VenueHall v : venues) {
+                log.info("  - Venue: ID={}, Naam={}, Capaciteit={}, Prijs per dag: ${}", 
+                    v.getId(), v.getName(), v.getCapacity(), v.getPricePerDay());
+            }
+
         } catch (Exception e) {
 
             System.err.println("Venue error: " + e.getMessage());
+            log.error("Fout bij ophalen venues", e);
 
             venues = Collections.emptyList();
         }
@@ -124,6 +142,8 @@ public class BrokerController {
                 (cateringPackages.isEmpty() || venues.isEmpty())
                         ? "PARTIAL - one or more suppliers unavailable"
                         : "OK - all suppliers responding";
+
+        log.info("Status: {}", status);
 
         return new AvailablePackagesResponse(
                 venues,
@@ -183,6 +203,50 @@ public class BrokerController {
                     Boolean.TRUE.equals(body.get("success"));
 
         } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean confirmCatering(String id, String date) {
+        try {
+            String url = cateringServiceUrl + "/catering/confirm?cateringId=" + id + "&date=" + date;
+
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(
+                            url,
+                            null,
+                            Map.class
+                    );
+
+            Map body = response.getBody();
+
+            return body != null &&
+                    Boolean.TRUE.equals(body.get("success"));
+
+        } catch (Exception e) {
+            log.error("Fout tijdens het bevestigen van de catering: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean confirmVenue(String id, String date) {
+        try {
+            String url = venueServiceUrl + "/venue/confirm?venueId=" + id + "&date=" + date;
+
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(
+                            url,
+                            null,
+                            Map.class
+                    );
+
+            Map body = response.getBody();
+
+            return body != null &&
+                    Boolean.TRUE.equals(body.get("success"));
+
+        } catch (Exception e) {
+            log.error("Fout tijdens het bevestigen van de venue: " + e.getMessage());
             return false;
         }
     }

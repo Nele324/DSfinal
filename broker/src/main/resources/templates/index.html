@@ -289,9 +289,21 @@
         </div>
 
         <div class="checkout-section">
-            <h3>3. Review Selection</h3>
+            <h3>3. Order information</h3>
+            <div class="form-group">
+                <label for="address"><strong>Delivery Address:</strong></label>
+                <input type="text" id="address" name="address" placeholder="Enter delivery address" required>
+            </div>
+            <div class="form-group">
+                <label for="cardNumber"><strong>Card Number:</strong></label>
+                <input type="text" id="cardNumber" name="cardNumber" placeholder="Enter card number" required> 
+            </div>    
+        </div>
+
+        <div class="checkout-section">
+            <h3>4. Review Selection</h3>
             <p>Click below to see your total price and confirm details.</p>
-            <button type="submit" class="btn-review">Proceed to Review</button>
+            <button type="submit" class="btn-review" id="reviewButton">Proceed to Review</button>
         </div>
 
     </form>
@@ -301,5 +313,19 @@
 </div>
 
 <script th:src="@{/js/index.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const reviewBtn = document.getElementById('reviewButton');
+        const form = document.querySelector('form');
+
+        if (form) {
+            form.onsubmit = function() {
+                reviewBtn.innerHTML = "🚀 Processing Reservation...";
+                reviewBtn.style.backgroundColor = "#95a5a6";
+                reviewBtn.disabled = true;
+            };
+        }
+    });
+</script>
 </body>
 </html>
