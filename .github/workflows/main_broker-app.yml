@@ -26,7 +26,7 @@ jobs:
 
       - name: Build with Maven
         run: |
-          cd Broker
+          cd broker
           mvn clean package -DskipTests
 
       - name: Upload artifact for deployment job
