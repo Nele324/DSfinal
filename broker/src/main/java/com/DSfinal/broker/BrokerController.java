@@ -95,11 +95,13 @@ public class BrokerController {
                     ? Arrays.asList(catArray)
                     : Collections.emptyList();
 
+            /*
             log.info("Catering packages ontvangen: {}", cateringPackages.size());
             for (CateringPackage c : cateringPackages) {
                 log.info("  - Catering: ID={}, Naam={}, MaxGuests={}, Prijs per persoon: ${}", 
                     c.getId(), c.getName(), c.getMaxGuests(), c.getPricePerPerson());
             }
+            */
 
         } catch (Exception e) {
 
@@ -124,11 +126,13 @@ public class BrokerController {
                     ? Arrays.asList(venArray)
                     : Collections.emptyList();
 
+            /*
             log.info("Venues ontvangen: {}", venues.size());
             for (VenueHall v : venues) {
                 log.info("  - Venue: ID={}, Naam={}, Capaciteit={}, Prijs per dag: ${}", 
                     v.getId(), v.getName(), v.getCapacity(), v.getPricePerDay());
             }
+            */
 
         } catch (Exception e) {
 
@@ -319,12 +323,12 @@ public class BrokerController {
                     "date", date
             );
             
-            String url = venueServiceUrl + "/venue/cancel";
+            String url = venueServiceUrl + "/venue/cancel?venueId=" + id + "&date=" + date;
             
             ResponseEntity<Map> response =
                     restTemplate.postForEntity(
                             url,
-                            request,
+                            null,
                             Map.class
                     );
             
@@ -352,12 +356,12 @@ public class BrokerController {
                     "date", date
             );
             
-            String url = cateringServiceUrl + "/catering/cancel";
+            String url = cateringServiceUrl + "/catering/cancel?cateringId=" + id + "&date=" + date;
             
             ResponseEntity<Map> response =
                     restTemplate.postForEntity(
                             url,
-                            request,
+                            null,
                             Map.class
                     );
             
