@@ -110,8 +110,13 @@ public class CateringService {
             return new ReserveResponse(false, "Catering not found");
         }
 
+        // Remove from both pending and confirmed reservations (handles both rollback scenarios)
         if (catering.getPendingReservations() != null) {
             catering.getPendingReservations().remove(date);
+        }
+
+        if (catering.getConfirmedReservations() != null) {
+            catering.getConfirmedReservations().remove(date);
         }
 
         repository.save(catering);

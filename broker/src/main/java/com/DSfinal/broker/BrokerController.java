@@ -250,4 +250,131 @@ public class BrokerController {
             return false;
         }
     }
+
+    // Compensating transactions (Saga pattern) - cancel methods for rollback
+    public boolean cancelVenue(String id, String date) {
+        try {
+            String url = venueServiceUrl + "/venue/cancel?venueId=" + id + "&date=" + date;
+
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(
+                            url,
+                            null,
+                            Map.class
+                    );
+
+            Map body = response.getBody();
+            boolean cancelled = body != null && Boolean.TRUE.equals(body.get("success"));
+            
+            if (cancelled) {
+                log.info("Venue {} cancelled for date {} as compensating transaction", id, date);
+            } else {
+                log.error("Failed to cancel venue {} for date {} - rollback may be incomplete", id, date);
+            }
+            
+            return cancelled;
+
+        } catch (Exception e) {
+            log.error("Error during venue cancellation (compensating transaction): " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Compensating transaction for catering
+    public boolean cancelCatering(String id, String date) {
+        try {
+            String url = cateringServiceUrl + "/catering/cancel?cateringId=" + id + "&date=" + date;
+
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(
+                            url,
+                            null,
+                            Map.class
+                    );
+
+            Map body = response.getBody();
+            boolean cancelled = body != null && Boolean.TRUE.equals(body.get("success"));
+            
+            if (cancelled) {
+                log.info("Catering {} cancelled for date {} as compensating transaction", id, date);
+            } else {
+                log.error("Failed to cancel catering {} for date {} - rollback may be incomplete", id, date);
+            }
+            
+            return cancelled;
+
+        } catch (Exception e) {
+            log.error("Error during catering cancellation (compensating transaction): " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Release methods for reservations (SAGA compensating transactions for reservation phase)
+    // These are called when a reservation needs to be rolled back
+    
+    public boolean releaseVenue(String id, String date) {
+        try {
+            Map<String, Object> request = Map.of(
+                    "venueId", id,
+                    "date", date
+            );
+            
+            String url = venueServiceUrl + "/venue/cancel";
+            
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(
+                            url,
+                            request,
+                            Map.class
+                    );
+            
+            Map body = response.getBody();
+            boolean released = body != null && Boolean.TRUE.equals(body.get("success"));
+            
+            if (released) {
+                log.info("Venue {} released for date {} (reservation phase rollback)", id, date);
+            } else {
+                log.error("Failed to release venue {} for date {} - reservation may still be pending", id, date);
+            }
+            
+            return released;
+            
+        } catch (Exception e) {
+            log.error("Error during venue release (compensating transaction for reservation): " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean releaseCatering(String id, String date) {
+        try {
+            Map<String, Object> request = Map.of(
+                    "cateringId", id,
+                    "date", date
+            );
+            
+            String url = cateringServiceUrl + "/catering/cancel";
+            
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(
+                            url,
+                            request,
+                            Map.class
+                    );
+            
+            Map body = response.getBody();
+            boolean released = body != null && Boolean.TRUE.equals(body.get("success"));
+            
+            if (released) {
+                log.info("Catering {} released for date {} (reservation phase rollback)", id, date);
+            } else {
+                log.error("Failed to release catering {} for date {} - reservation may still be pending", id, date);
+            }
+            
+            return released;
+            
+        } catch (Exception e) {
+            log.error("Error during catering release (compensating transaction for reservation): " + e.getMessage());
+            return false;
+        }
+    }
 }

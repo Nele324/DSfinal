@@ -7,34 +7,76 @@
         body { font-family: 'Segoe UI', sans-serif; padding: 2rem; background: #f4f6f8; }
         h1 { color: #2c3e50; }
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        th { background: #34495e; color: white; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #ecf0f1; }
+        th { background: #34495e; color: white; padding: 12px; text-align: left; font-size: 0.9rem; }
+        td { padding: 12px; border-bottom: 1px solid #ecf0f1; font-size: 0.85rem; }
         tr:last-child td { border-bottom: none; }
         .logout { float: right; color: #e74c3c; text-decoration: none; }
+        .status-confirmed { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; }
+        .status-reserved { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; }
+        .status-failed { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 4px; }
+        .status-rollback-incomplete { background: #f5c6cb; color: #721c24; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .status-retrying { background: #e2e3e5; color: #383d41; padding: 4px 8px; border-radius: 4px; }
+        .timestamp { color: #7f8c8d; font-size: 0.8rem; }
+        .container { max-width: 1600px; margin: 0 auto; overflow-x: auto; }
+        .retry-info { color: #9b59b6; font-size: 0.75rem; font-weight: bold; }
+        .pending-comps { color: #e74c3c; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
 <h1>All Orders
-    <a href="index.html" class="logout">Logout</a>
+    <a href="/manager/logout" class="logout">Logout</a>
 </h1>
 
+<div class="container">
 <table>
     <thead>
     <tr>
         <th>Order ID</th>
+        <th>Status</th>
+        <th>Created At</th>
+        <th>Event Date</th>
         <th>Venue</th>
         <th>Catering</th>
+        <th>Address</th>
+        <th>Card</th>
+        <th>Total Price</th>
+        <th>Recovery Status</th>
     </tr>
     </thead>
     <tbody>
     <tr th:each="order : ${orders}">
         <td th:text="${order.id}"></td>
+        <td>
+            <span th:if="${order.status == 'CONFIRMED'}" class="status-confirmed" th:text="${order.status}"></span>
+            <span th:if="${order.status == 'RESERVED'}" class="status-reserved" th:text="${order.status}"></span>
+            <span th:if="${order.status == 'FAILED_ROLLED_BACK'}" class="status-failed" th:text="${order.status}"></span>
+            <span th:if="${order.status == 'FAILED_ROLLBACK_INCOMPLETE'}" class="status-rollback-incomplete" th:text="${order.status}"></span>
+            <span th:if="${order.status == 'FAILED_PERMANENT'}" class="status-failed" th:text="${order.status}"></span>
+            <span th:unless="${order.status == 'CONFIRMED' || order.status == 'RESERVED' || order.status == 'FAILED_ROLLED_BACK' || order.status == 'FAILED_ROLLBACK_INCOMPLETE' || order.status == 'FAILED_PERMANENT'}" th:text="${order.status}"></span>
+        </td>
+        <td class="timestamp" th:text="${#dates.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        <td th:text="${#dates.format(order.date, 'yyyy-MM-dd')}"></td>
         <td th:text="${order.venueId}"></td>
         <td th:text="${order.cateringId}"></td>
+        <td th:text="${order.address}"></td>
+        <td th:text="${order.cardNumber}"></td>
+        <td th:text="'$' + ${order.totalPrice}"></td>
+        <td>
+            <div th:if="${order.pendingCompensations != null && !#strings.isEmpty(order.pendingCompensations)}">
+                <div class="retry-info">🔄 Retrying...</div>
+                <div class="pending-comps" th:text="'Pending: ' + ${order.pendingCompensations}"></div>
+                <div class="retry-info" th:text="'Attempt: ' + ${order.retryCount} + '/5'"></div>
+                <div class="timestamp" th:if="${order.lastRetryTime != null}" th:text="'Last: ' + ${#dates.format(order.lastRetryTime, 'HH:mm:ss')}"></div>
+            </div>
+            <div th:unless="${order.pendingCompensations != null && !#strings.isEmpty(order.pendingCompensations)}" class="timestamp">
+                ✓ Complete
+            </div>
+        </td>
     </tr>
     </tbody>
 </table>
+</div>
 
 </body>
 </html>

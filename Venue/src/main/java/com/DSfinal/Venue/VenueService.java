@@ -148,9 +148,15 @@ public class VenueService {
             );
         }
 
+        // Remove from both pending and confirmed reservations (handles both rollback scenarios)
         if (hall.getPendingReservations() != null) {
 
             hall.getPendingReservations().remove(date);
+        }
+
+        if (hall.getConfirmedReservations() != null) {
+
+            hall.getConfirmedReservations().remove(date);
         }
 
         repository.save(hall);

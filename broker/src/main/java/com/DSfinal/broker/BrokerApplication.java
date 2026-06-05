@@ -2,8 +2,10 @@ package com.DSfinal.broker;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "com.DSfinal")
+@EnableScheduling
 public class BrokerApplication {
 
 	public static void main(String[] args) {
