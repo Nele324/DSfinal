@@ -23,7 +23,7 @@ public class FailureRecoveryScheduler {
     
     private static final Logger log = LoggerFactory.getLogger(FailureRecoveryScheduler.class);
     
-    private static final int MAX_RETRY_ATTEMPTS = 5;
+    private static final int MAX_RETRY_ATTEMPTS = 6;
     private static final long RETRY_INTERVAL_MS = 1000; // Start with 1 second
     
     @Autowired
@@ -42,11 +42,13 @@ public class FailureRecoveryScheduler {
 
         List<Order> allOrders = orderRepository.findAll();
         List<Order> ordersToProcess = new ArrayList<>();
+        List<Order> pendingOrders = new ArrayList<>();
 
-        long twominutesAgo = System.currentTimeMillis() - (2 * 60 * 1000);
+        long minutesAgo = System.currentTimeMillis() - (5 * 60 * 1000);
 
         int amountIncomplete = 0;
         int amountCrashed = 0;
+        int pendingCount = 0;
 
         for (Order order : allOrders) {
             String status = order.getStatus();
@@ -56,9 +58,9 @@ public class FailureRecoveryScheduler {
                 ordersToProcess.add(order);
                 amountIncomplete++;
             } else if (status.equals("RESERVED")) {
-                // Check if this order has been in RESERVED for more than 2 minutes (indicating a possible crash)
+                // Check if this order has been in RESERVED for more than 5 minutes (indicating a possible crash)
                 Date createdAt = order.getCreatedAt();
-                if (createdAt != null && createdAt.getTime() < twominutesAgo) {
+                if (createdAt != null && createdAt.getTime() < minutesAgo) {
                     order.setStatus("FAILED_ROLLBACK_INCOMPLETE");
                     order.setPendingCompensations("venue,catering");
                     order.setRetryCount(0);
@@ -67,22 +69,28 @@ public class FailureRecoveryScheduler {
                     ordersToProcess.add(order);
                     amountCrashed++;
                 }
+            } else if (status.equals("PENDING")) {
+                orderRepository.save(order);
+                pendingOrders.add(order);
+                pendingCount++;
             }
         }
 
         log.info("Found {} orders with FAILED_ROLLBACK_INCOMPLETE status", amountIncomplete);
         log.info("Found {} orders with RESERVED status that may have crashed", amountCrashed);
+        log.info("Found {} orders with PENDING status", pendingCount);
         
         for (Order order : ordersToProcess) {
             retryCompensatingTransaction(order);
         }
+
+        for (Order order : pendingOrders) {
+            retryCompensatingTransactionPending(order);
+        }
         
         log.info("=== FAILURE RECOVERY SCHEDULER END ===");
     }
-    
-    /**
-     * Retry compensating transactions with exponential backoff
-     */
+
     private void retryCompensatingTransaction(Order order) {
         int retryCount = order.getRetryCount() != null ? order.getRetryCount() : 0;
         
@@ -92,7 +100,7 @@ public class FailureRecoveryScheduler {
                     "Manual intervention required!", order.getId(), retryCount, MAX_RETRY_ATTEMPTS);
             order.setStatus("FAILED_PERMANENT");
             orderRepository.save(order);
-            return;
+            return "order-failed";
         }
         
         // Exponential backoff: check if enough time has passed since last retry
@@ -137,8 +145,102 @@ public class FailureRecoveryScheduler {
             log.info("✓ All compensations succeeded for order {}", order.getId());
             order.setStatus("FAILED_ROLLED_BACK"); // Mark as eventually recovered
             order.setPendingCompensations(null);
+            return "order-failed"
         }
         
+        orderRepository.save(order);
+    }
+    
+    /**
+     * Retry compensating transactions with exponential backoff
+     */
+    private void retryCompensatingTransactionPending(Order order) {
+        int retryCount = order.getRetryCount() != null ? order.getRetryCount() : 0;
+        
+        // STRIKTE DEADLINE CHECK VIA RETRY COUNT (Level 2 Requirement)
+        // Omdat de scheduler elke 30 seconden draait en exponential backoff toepast,
+        // staat een MAX_RETRY_ATTEMPTS van 10 gelijk aan ruim 15 minuten aan totale tijd.
+        if (retryCount >= MAX_RETRY_ATTEMPTS) {
+            log.error("ORDER FAILURE: Order {} has exceeded the 15-minute deadline or reached maximum retries ({}/{}).", 
+                    order.getId(), retryCount, MAX_RETRY_ATTEMPTS);
+            
+            order.setStatus("FAILED_ROLLBACK_INCOMPLETE");
+            order.setRetryCount(0);
+            order.setLastRetryTime(new Date());
+            orderRepository.save(order);
+            return;
+        }
+        
+        // Exponential backoff check: kijken of er al genoeg tijd is verstreken sinds de vorige poging
+        Date lastRetry = order.getLastRetryTime();
+        long timeSinceLastRetry = lastRetry != null ? 
+            (System.currentTimeMillis() - lastRetry.getTime()) : Long.MAX_VALUE;
+        
+        long nextRetryTime = calculateBackoffDelay(retryCount);
+        
+        if (timeSinceLastRetry < nextRetryTime) {
+            log.debug("Order {} retry too soon. Last retry: {}ms ago, next: {}ms", 
+                    order.getId(), timeSinceLastRetry, nextRetryTime);
+            return;
+        }
+        
+        log.info("RETRY ASYNC SAGA #{}/{} voor order {}", 
+                retryCount + 1, MAX_RETRY_ATTEMPTS, order.getId());
+
+        boolean venueSuccess = false;
+        boolean cateringSuccess = false;
+        
+        String formatDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(order.getDate());
+
+        if (order.getPendingCompensations() == null || order.getPendingCompensations().isEmpty()) {
+            venueSuccess = cateringSuccess = true;
+            
+        } else if (order.getPendingCompensations().contains("venue") && !order.getPendingCompensations().contains("catering")) {
+            try {
+                venueSuccess = brokerController.confirmVenue(order.getVenueId(), formatDate);
+            } catch (Exception e) {
+                venueSuccess = false;
+            }
+            cateringSuccess = true; // Catering was already confirmed
+            
+        } else if (!order.getPendingCompensations().contains("venue") && order.getPendingCompensations().contains("catering")) {
+            try {
+                cateringSuccess = brokerController.confirmCatering(order.getCateringId(), formatDate);
+            } catch (Exception e) {
+                cateringSuccess = false;
+            }
+            venueSuccess = true; // Venue was already confirmed
+        } else if (order.getPendingCompensations().contains("venue") && order.getPendingCompensations().contains("catering")) {
+            try {
+                cateringSuccess = brokerController.confirmCatering(order.getCateringId(), formatDate);
+            } catch (Exception e) {
+                cateringSuccess = false;
+            } 
+            try {
+                venueSuccess = brokerController.confirmVenue(order.getVenueId(), formatDate);
+            } catch (Exception e) {
+                venueSuccess = false;
+            }
+        } 
+        
+        if (venueSuccess && cateringSuccess) {
+            log.info("🎉 Volledig succes! PENDING order {} is binnen de 15 minuten succesvol bevestigd!", order.getId());
+            order.setStatus("CONFIRMED");
+            order.setPendingCompensations(null);
+            order.setRetryCount(0);
+            order.setLastRetryTime(new Date());
+            orderRepository.save(order);
+            return "order-success";
+
+        } else {
+            // Het is nog niet gelukt. We verhogen de teller en proberen het later opnieuw via backoff
+            log.warn("✗ ONe or more suplliers are still nieeded. Order {} stays PENDING.", order.getId());
+            order.setRetryCount(retryCount + 1);
+            order.setStatus("PENDING");
+        }
+        
+        // Update de tracking gegevens in de database
+        order.setLastRetryTime(new Date());
         orderRepository.save(order);
     }
     

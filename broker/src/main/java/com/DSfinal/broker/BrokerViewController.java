@@ -130,84 +130,50 @@ public class BrokerViewController {
             // PHASE 1: Confirm Venue
             venueConfirmed = apiController.confirmVenue(selectedVenue, date);
             
-            if (!venueConfirmed) {
-                throw new Exception("Venue confirmation failed.");
-            }
-            
             // PHASE 2: Confirm Catering
-            cateringConfirmed = apiController.confirmCatering(selectedCatering, date);
-            
-            if (!cateringConfirmed) {
-                // COMPENSATING TRANSACTION: Rollback venue confirmation
-                boolean venueRollback = apiController.cancelVenue(selectedVenue, date);
-                boolean cateringRollback = apiController.cancelCatering(selectedCatering, date);
-                
-                if (venueRollback && cateringRollback) {
-                    order.setStatus("FAILED_ROLLED_BACK");
-                    saveOrderToDatabase(order);
-                    model.addAttribute("error", "Catering confirmation failed. All reservations have been cancelled. Please try again.");
-                } else {
-                    // CRITICAL: At least one rollback failed - data inconsistency
-                    // Track which suppliers still need compensation
-                    StringBuilder pending = new StringBuilder();
-                    if (!venueRollback) pending.append("venue");
-                    if (!cateringRollback) {
-                        if (pending.length() > 0) pending.append(",");
-                        pending.append("catering");
-                    }
-                    
-                    order.setStatus("FAILED_ROLLBACK_INCOMPLETE");
-                    order.setPendingCompensations(pending.toString());
-                    order.setRetryCount(0);
-                    order.setLastRetryTime(new Date());
-                    saveOrderToDatabase(order);
-                    model.addAttribute("error", "CRITICAL: Catering confirmation failed and we could not cancel all reservations. " +
-                        "Our system will automatically retry. Order ID: " + orderId);
-                }
-                return "order-failed";
+            if (venueConfirmed) {
+                cateringConfirmed = apiController.confirmCatering(selectedCatering, date);
             }
+
+            if (venueConfirmed && cateringConfirmed) {
+                order.setStatus("CONFIRMED");
+                saveOrderToDatabase(order);
+                model.addAttribute("message", "Order Confirmed Successfully!");
+                return "order-success";
+            } 
+
+            log.warn("One of the suppliers failed to confirm. Venue confirmed: {}, Catering confirmed: {}", venueConfirmed, cateringConfirmed);
             
-            // SUCCESS: Both confirmations succeeded
-            order.setStatus("CONFIRMED");
-            saveOrderToDatabase(order);
-            model.addAttribute("message", "Order Placed Successfully!");
-            return "order-success";
-            
-        } catch (Exception e) {
-            // Exception during confirm - attempt to rollback what was confirmed
             StringBuilder pending = new StringBuilder();
-            
-            boolean venueRollback = apiController.cancelVenue(selectedVenue, date);
-            if (!venueRollback) {
-                log.warn("Compensatie faalde voor venue tijdens catch.");
-                pending.append("venue");
-            }
-            
-            boolean cateringRollback = apiController.cancelCatering(selectedCatering, date);
-            if (!cateringRollback) {
-                log.warn("Compensatie faalde voor catering tijdens catch.");
+            if (!venueConfirmed) pending.append("venue");
+            if (!cateringConfirmed) {
                 if (pending.length() > 0) pending.append(",");
                 pending.append("catering");
             }
-            
-            if (pending.length() > 0) {
-                // Some rollbacks failed - set up for retry
-                order.setStatus("FAILED_ROLLBACK_INCOMPLETE");
-                order.setPendingCompensations(pending.toString());
+
+            order.setStatus("PENDING");
+            order.setPendingCompensations(pending.toString());
+            order.setRetryCount(0);
+            order.setLastRetryTime(new Date());
+            saveOrderToDatabase(order);
+
+            model.addAttribute("orderId", orderId);
+            model.addAttribute("message", "Order is pending. We will automatically retry for 15minutes. Please wait...");
+            return "order-processing";
+
+            } catch (Exception e) {
+                log.error("Network error occurred while processing order. Order is put in retry queue.", e);
+                
+                order.setStatus("PENDING");
+                order.setPendingCompensations("venue,catering");
                 order.setRetryCount(0);
                 order.setLastRetryTime(new Date());
                 saveOrderToDatabase(order);
-                model.addAttribute("error", "CRITICAL ERROR: Order confirmation failed and we could not cancel all reservations. " +
-                    "Our system will automatically retry. Order ID: " + orderId);
-            } else {
-                // All rollbacks succeeded
-                order.setStatus("FAILED_ROLLED_BACK");
-                order.setPendingCompensations(null);
-                saveOrderToDatabase(order);
-                model.addAttribute("error", "Order confirmation failed. Reservations have been cancelled. Error: " + e.getMessage());
+                
+                model.addAttribute("orderId", orderId);
+                return "order-processing";
             }
-            return "order-failed";
-        }
+
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -233,7 +199,6 @@ public class BrokerViewController {
     @PostMapping("/broker/review-order")
     @Transactional
     public String reviewOrder(OrderRequest request, Model model) {
-        // Reuse the logic Lotte already wrote to get the fresh data
         AvailablePackagesResponse data = apiController.getAvailablePackages(request.getDate());
 
         // Find the Venue object that matches the ID the user picked
