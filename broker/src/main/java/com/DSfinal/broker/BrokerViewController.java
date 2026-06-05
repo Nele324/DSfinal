@@ -100,6 +100,10 @@ public class BrokerViewController {
                                @RequestParam("date") String date,
                                Model model) {
         log.info("=== CONFIRM ORDER START ===");
+
+        //log.warn("CRITICAL: Broker stort nu volledig ter aarde!");
+        //System.exit(0);
+
         log.info("Attempting to confirm order with ID: {}", orderId);
         log.info("All orders currently in database: {}", orderRepository.count());
         

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * SAGA Pattern: Compensating Transactions with Retry Mechanism
@@ -38,15 +39,41 @@ public class FailureRecoveryScheduler {
     @Scheduled(fixedDelay = 30000, initialDelay = 60000)
     public void retryFailedCompensations() {
         log.info("=== FAILURE RECOVERY SCHEDULER START ===");
+
+        List<Order> allOrders = orderRepository.findAll();
+        List<Order> ordersToProcess = new ArrayList<>();
+
+        long twominutesAgo = System.currentTimeMillis() - (2 * 60 * 1000);
+
+        int amountIncomplete = 0;
+        int amountCrashed = 0;
+
+        for (Order order : allOrders) {
+            String status = order.getStatus();
+            if (status == null) continue;
+
+            if (status.equals("FAILED_ROLLBACK_INCOMPLETE")) {
+                ordersToProcess.add(order);
+                amountIncomplete++;
+            } else if (status.equals("RESERVED")) {
+                // Check if this order has been in RESERVED for more than 2 minutes (indicating a possible crash)
+                Date createdAt = order.getCreatedAt();
+                if (createdAt != null && createdAt.getTime() < twominutesAgo) {
+                    order.setStatus("FAILED_ROLLBACK_INCOMPLETE");
+                    order.setPendingCompensations("venue,catering");
+                    order.setRetryCount(0);
+                    order.setLastRetryTime(new Date());
+                    orderRepository.save(order);
+                    ordersToProcess.add(order);
+                    amountCrashed++;
+                }
+            }
+        }
+
+        log.info("Found {} orders with FAILED_ROLLBACK_INCOMPLETE status", amountIncomplete);
+        log.info("Found {} orders with RESERVED status that may have crashed", amountCrashed);
         
-        // Find all orders that failed rollback and need retry
-        List<Order> failedOrders = orderRepository.findAll().stream()
-                .filter(o -> o.getStatus() != null && o.getStatus().equals("FAILED_ROLLBACK_INCOMPLETE"))
-                .toList();
-        
-        log.info("Found {} orders with FAILED_ROLLBACK_INCOMPLETE status", failedOrders.size());
-        
-        for (Order order : failedOrders) {
+        for (Order order : ordersToProcess) {
             retryCompensatingTransaction(order);
         }
         

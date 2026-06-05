@@ -14,12 +14,21 @@ package com.DSfinal.broker;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
 @Configuration
 public class RestTemplateConfig {
 
-    @Bean //creating it as a Bean object
+    @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        
+        // Connect timeout: 3000 milliseconden (= 3 seconden)
+        factory.setConnectTimeout(3000);
+        
+        // Read timeout: 3000 milliseconden (= 3 seconden)
+        factory.setReadTimeout(3000);
+        
+        return new RestTemplate(factory);
     }
 }
