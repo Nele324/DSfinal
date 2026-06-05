@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy JAR app to Azure Web App - broker-app
+name: Build and deploy JAR app to Azure Web App - catering-app
 
 on:
   push:
@@ -26,14 +26,15 @@ jobs:
 
       - name: Build with Maven
         run: |
-          cd broker
+          cd Catering
           mvn clean package -DskipTests
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: broker/target/broker-0.0.1-SNAPSHOT.jar
+          path: Catering/target/Catering-0.0.1-SNAPSHOT.jar
+          
 
   deploy:
     runs-on: ubuntu-latest
@@ -51,15 +52,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_67D6534E4446499698B4D7543987A28E }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_23516F85561E4D0DA71BCAE9F898C788 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7126A990D14D4A6C92DE1DD30C997625 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_9775F743711247A99209300EDCF2488C }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_6D75E40BDE7B47C193DC98F5332D9326 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_139363E9E9204A779E21670D386EB45C }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'broker-app'
+          app-name: 'catering-app'
           slot-name: 'Production'
-          package:  broker-0.0.1-SNAPSHOT.jar
+          package: '*.jar'
           
