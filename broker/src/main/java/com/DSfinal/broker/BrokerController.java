@@ -70,10 +70,10 @@ public class BrokerController {
         log.info("Received order request: {}", orderRequest);
         try {
             orderRepository.save(orderRequest);
-            return ResponseEntity.ok("Order succesvol opgeslagen met ID: " + orderRequest.getId());
+            return ResponseEntity.ok("Order saved with succes with ID: " + orderRequest.getId());
         } catch (Exception e) {
-            log.error("Fout bij opslaan order", e);
-            return ResponseEntity.status(500).body("Fout bij opslaan order: " + e.getMessage());
+            log.error("Fault by saving order: " + e);
+            return ResponseEntity.status(500).body("Fault by saving order: " + e.getMessage());
         }
     }
 
@@ -108,7 +108,7 @@ public class BrokerController {
         } catch (Exception e) {
 
             System.err.println("Catering error: " + e.getMessage());
-            log.error("Fout bij ophalen catering packages", e);
+            log.error("Fault by fetching catering packages: " + e.getMessage());
 
             cateringPackages = Collections.emptyList();
         }
@@ -139,7 +139,7 @@ public class BrokerController {
         } catch (Exception e) {
 
             System.err.println("Venue error: " + e.getMessage());
-            log.error("Fout bij ophalen venues", e);
+            log.error("Fault by fetching venues: " + e.getMessage(), e);
 
             venues = Collections.emptyList();
         }
@@ -182,10 +182,10 @@ public class BrokerController {
                     Boolean.TRUE.equals(body.get("success"));
 
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
-            log.error("HTTP Fout van Venue Service: Status {} - Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("HTTP error during reserveVenue: Status {} - Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
             return false;
         } catch (Exception e) {
-            log.error("Onverwachte fout tijdens reserveVenue: ", e);
+            log.error("Error during reserveVenue: " + e);
             return false;
         }
     }
@@ -213,10 +213,10 @@ public class BrokerController {
                     Boolean.TRUE.equals(body.get("success"));
 
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
-            log.error("HTTP Fout van Catering Service: Status {} - Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("HTTP error during reserveCatering: Status {} - Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
             return false;
         } catch (Exception e) {
-            log.error("Onverwachte fout tijdens reserveCatering: ", e);
+            log.error("Fault during reserveCatering: " + e.getMessage());
             return false;
         }
     }
@@ -238,7 +238,7 @@ public class BrokerController {
                     Boolean.TRUE.equals(body.get("success"));
 
         } catch (Exception e) {
-            log.error("Fout tijdens het bevestigen van de catering: " + e.getMessage());
+            log.error("Fault during catering confirmation: " + e.getMessage());
             return false;
         }
     }
@@ -260,7 +260,7 @@ public class BrokerController {
                     Boolean.TRUE.equals(body.get("success"));
 
         } catch (Exception e) {
-            log.error("Fout tijdens het bevestigen van de venue: " + e.getMessage());
+            log.error("Fault during venue confirmation: " + e.getMessage());
             return false;
         }
     }

@@ -213,7 +213,7 @@ public class FailureRecoveryScheduler {
                 try {
                     cateringSuccess = brokerController.confirmCatering(order.getCateringId(), formatDate);
                     if (cateringSuccess) {
-                        log.info("✓ Catering succesvol bevestigd tijdens retry voor order {}", order.getId());
+                        log.info("✓ Catering confirmed successfully during retry for order {}", order.getId());
                         removePendingCompensation(order, "catering");
                         log.info("Updated pending compensations for order {}: {}", order.getId(), order.getPendingCompensations());
                         pending = order.getPendingCompensations(); 
@@ -229,7 +229,7 @@ public class FailureRecoveryScheduler {
                 try {
                     venueSuccess = brokerController.confirmVenue(order.getVenueId(), formatDate);
                     if (venueSuccess) {
-                        log.info("✓ Venue succesvol bevestigd tijdens retry voor order {}", order.getId());
+                        log.info("✓ Venue confirmed successfully during retry for order {}", order.getId());
                         removePendingCompensation(order, "venue");
                         log.info("Updated pending compensations for order {}: {}", order.getId(), order.getPendingCompensations());
                         pending = order.getPendingCompensations();
@@ -243,7 +243,7 @@ public class FailureRecoveryScheduler {
         }
         
         if (venueSuccess && cateringSuccess) {
-            log.info("🎉 Volledig succes! PENDING order {} is binnen de 15 minuten succesvol bevestigd!", order.getId());
+            log.info("🎉 Full success! PENDING order {} is confirmed within 15 minutes!", order.getId());
             order.setStatus("CONFIRMED");
             order.setPendingCompensations(null);
             order.setRetryCount(0);
