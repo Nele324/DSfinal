@@ -17,43 +17,43 @@ import org.hibernate.annotations.CreationTimestamp;
 @Table(name = "Orders")
 public class Order {
     @Id
-    @Column(name = "orderId")
+    @Column(name = "order_id")
     private String id;
 
-    @Column(name = "venueId")
+    @Column(name = "venue_id")
     private String venueId;
 
-    @Column(name = "cateringId")
+    @Column(name = "catering_id")
     private String cateringId;
 
     @Column(name = "status")
     private String status;
 
-    @Column(name = "orderDate")
+    @Column(name = "order_date")
     private Date date;
 
     @Column(name = "address")
     private String address;
 
-    @Column(name = "paymentCard")
+    @Column(name = "payment_card")
     private String cardNumber;
 
-    @Column(name = "totalPrice")
+    @Column(name = "total_price")
     private double totalPrice;
 
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "createdAt", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Date createdAt;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "lastRetryTime")
+    @Column(name = "last_retry_time")
     private Date lastRetryTime;
 
-    @Column(name = "retryCount")
+    @Column(name = "retry_count")
     private Integer retryCount = 0;
 
-    @Column(name = "pendingCompensations", length = 500)
+    @Column(name = "pending_compensations", length = 500)
     private String pendingCompensations; // CSV list: "venue,catering" indicating which still need rollback
 
     // Constructors
