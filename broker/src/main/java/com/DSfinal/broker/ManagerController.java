@@ -21,11 +21,6 @@ public class ManagerController {
     @Autowired
     private OrderRepository orderRepository;
 
-    @GetMapping("/login")
-    public String loginPage() {
-        return "manager-login";
-    }
-
     @GetMapping("/orders")
     public String viewOrders(Model model) {
         // Only reachable if Spring Security verified ROLE_MANAGER
@@ -33,8 +28,13 @@ public class ManagerController {
         return "manager-view-orders";
     }
 
+    @GetMapping("/login")
+    public String loginPage() {
+        return "redirect:/oauth2/authorization/okta";
+    }
+
     @GetMapping("/logout")
     public String logout() {
-        return "index";
+        return "redirect:/logout";
     }
 }

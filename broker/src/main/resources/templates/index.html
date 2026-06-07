@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head>
     <meta charset="UTF-8">
     <title>Event Planner</title>
@@ -169,12 +170,14 @@
         <span th:text="${status}">Online</span>
     </div>
 
-    <div class="burger-menu"
-         th:onclick="|window.location.href='@{/manager/login}'|">
+    <div class="burger-menu" th:if="${#authorization.expression('isAuthenticated()')}"
+     th:onclick="|window.location.href='@{/manager/orders}'|">
+     
         <div></div>
         <div></div>
         <div></div>
     </div>
+    <a th:href="@{/oauth2/authorization/okta}">Log in with Auth0</a>
 </header>
 
 <div class="main-container">

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.*;
 
@@ -57,6 +58,7 @@ public class BrokerController {
         return combinations;
     }
 
+    @PreAuthorize("hasAuthority('MANAGER')")
     @GetMapping("/orders")
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
