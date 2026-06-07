@@ -93,7 +93,7 @@ public class BrokerViewController {
     //implements SAGA pattern: compensating transactions on failure
     //to ensure consistency: if one part fails, the other is rolled back
     @PostMapping("/broker/confirm-order")
-    @Transactional
+    //@Transactional
     public String confirmOrder(@RequestParam("orderId") String orderId,
                                @RequestParam("selectedVenue") String selectedVenue,
                                @RequestParam("selectedCatering") String selectedCatering,
@@ -176,7 +176,7 @@ public class BrokerViewController {
 
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void saveOrderToDatabase(Order order) {
         log.info("Saving order to database: ID={}, Status={}, Venue={}, Catering={}", 
                  order.getId(), order.getStatus(), order.getVenueId(), order.getCateringId());
@@ -197,7 +197,7 @@ public class BrokerViewController {
     }
 
     @PostMapping("/broker/review-order")
-    @Transactional
+    //@Transactional
     public String reviewOrder(OrderRequest request, Model model) {
         AvailablePackagesResponse data = apiController.getAvailablePackages(request.getDate());
 
@@ -266,7 +266,9 @@ public class BrokerViewController {
             reservedOrder.setTotalPrice(total);
             reservedOrder.setAddress(request.getAddress());
             reservedOrder.setCardNumber(request.getCardNumber());
-            reservedOrder.setCreatedAt(new java.util.Date()); // Manually set createdAt timestamp
+
+            reservedOrder.setRetryCount(0);
+            reservedOrder.setLastRetryTime(null);            
             
             java.util.Date orderDate;
             try {

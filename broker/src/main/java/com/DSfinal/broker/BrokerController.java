@@ -179,7 +179,11 @@ public class BrokerController {
             return body != null &&
                     Boolean.TRUE.equals(body.get("success"));
 
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("HTTP Fout van Venue Service: Status {} - Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            return false;
         } catch (Exception e) {
+            log.error("Onverwachte fout tijdens reserveVenue: ", e);
             return false;
         }
     }
@@ -206,7 +210,11 @@ public class BrokerController {
             return body != null &&
                     Boolean.TRUE.equals(body.get("success"));
 
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("HTTP Fout van Catering Service: Status {} - Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            return false;
         } catch (Exception e) {
+            log.error("Onverwachte fout tijdens reserveCatering: ", e);
             return false;
         }
     }

@@ -44,8 +44,6 @@ public class FailureRecoveryScheduler {
         List<Order> ordersToProcess = new ArrayList<>();
         List<Order> pendingOrders = new ArrayList<>();
 
-        long minutesAgo = System.currentTimeMillis() - (5 * 60 * 1000);
-
         int amountIncomplete = 0;
         int amountCrashed = 0;
         int pendingCount = 0;
@@ -58,9 +56,17 @@ public class FailureRecoveryScheduler {
                 ordersToProcess.add(order);
                 amountIncomplete++;
             } else if (status.equals("RESERVED")) {
+
+                if (order.getLastRetryTime() == null) {
+                    order.setLastRetryTime(new Date());
+                    order.setRetryCount(1); // Start de eerste tick
+                    orderRepository.save(order);
+                    continue; 
+                }
                 // Check if this order has been in RESERVED for more than 5 minutes (indicating a possible crash)
-                Date createdAt = order.getCreatedAt();
-                if (createdAt != null && createdAt.getTime() < minutesAgo) {
+                int currentTicks = order.getRetryCount() != null ? order.getRetryCount() : 0; 
+                if (currentTicks >= 60) { 
+                    log.warn("Order {} has been in RESERVED status for over 24 hours - treating as potential crash", order.getId());
                     order.setStatus("FAILED_ROLLBACK_INCOMPLETE");
                     order.setPendingCompensations("venue,catering");
                     order.setRetryCount(0);
@@ -68,9 +74,12 @@ public class FailureRecoveryScheduler {
                     orderRepository.save(order);
                     ordersToProcess.add(order);
                     amountCrashed++;
+                } else {
+                    order.setRetryCount(currentTicks + 1);
+                    orderRepository.save(order);
+                    log.debug("Order {} is in RESERVED status but not yet considered crashed (ticks: {})", order.getId(), currentTicks);
                 }
             } else if (status.equals("PENDING")) {
-                orderRepository.save(order);
                 pendingOrders.add(order);
                 pendingCount++;
             }
@@ -91,7 +100,7 @@ public class FailureRecoveryScheduler {
         log.info("=== FAILURE RECOVERY SCHEDULER END ===");
     }
 
-    private void retryCompensatingTransaction(Order order) {
+    private String retryCompensatingTransaction(Order order) {
         int retryCount = order.getRetryCount() != null ? order.getRetryCount() : 0;
         
         // Maximum 5 retries
@@ -113,7 +122,7 @@ public class FailureRecoveryScheduler {
         if (timeSinceLastRetry < nextRetryTime) {
             log.debug("Order {} retry too soon. Last retry: {}ms ago, next: {}ms", 
                     order.getId(), timeSinceLastRetry, nextRetryTime);
-            return;
+            return "order-failed";
         }
         
         log.info("RETRY #{}/{} for order {} with pending compensations: {}", 
@@ -122,7 +131,7 @@ public class FailureRecoveryScheduler {
         String pendingComps = order.getPendingCompensations();
         if (pendingComps == null || pendingComps.isEmpty()) {
             log.warn("Order {} has no pending compensations listed", order.getId());
-            return;
+            return "order-failed";
         }
         
         // Parse pending compensations and retry them
@@ -145,16 +154,18 @@ public class FailureRecoveryScheduler {
             log.info("✓ All compensations succeeded for order {}", order.getId());
             order.setStatus("FAILED_ROLLED_BACK"); // Mark as eventually recovered
             order.setPendingCompensations(null);
-            return "order-failed"
+            orderRepository.save(order);
+            return "order-failed";
         }
         
         orderRepository.save(order);
+        return "order-failed";
     }
     
     /**
      * Retry compensating transactions with exponential backoff
      */
-    private void retryCompensatingTransactionPending(Order order) {
+    private String retryCompensatingTransactionPending(Order order) {
         int retryCount = order.getRetryCount() != null ? order.getRetryCount() : 0;
         
         // STRIKTE DEADLINE CHECK VIA RETRY COUNT (Level 2 Requirement)
@@ -168,7 +179,7 @@ public class FailureRecoveryScheduler {
             order.setRetryCount(0);
             order.setLastRetryTime(new Date());
             orderRepository.save(order);
-            return;
+            return "order-failed";
         }
         
         // Exponential backoff check: kijken of er al genoeg tijd is verstreken sinds de vorige poging
@@ -181,7 +192,7 @@ public class FailureRecoveryScheduler {
         if (timeSinceLastRetry < nextRetryTime) {
             log.debug("Order {} retry too soon. Last retry: {}ms ago, next: {}ms", 
                     order.getId(), timeSinceLastRetry, nextRetryTime);
-            return;
+            return "order-failed";
         }
         
         log.info("RETRY ASYNC SAGA #{}/{} voor order {}", 
@@ -192,36 +203,44 @@ public class FailureRecoveryScheduler {
         
         String formatDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(order.getDate());
 
-        if (order.getPendingCompensations() == null || order.getPendingCompensations().isEmpty()) {
+        String pending = order.getPendingCompensations();
+
+        if (pending == null || pending.isEmpty()) {
             venueSuccess = cateringSuccess = true;
             
-        } else if (order.getPendingCompensations().contains("venue") && !order.getPendingCompensations().contains("catering")) {
-            try {
-                venueSuccess = brokerController.confirmVenue(order.getVenueId(), formatDate);
-            } catch (Exception e) {
-                venueSuccess = false;
+        } else {
+            if (pending.contains("catering")) {
+                try {
+                    cateringSuccess = brokerController.confirmCatering(order.getCateringId(), formatDate);
+                    if (cateringSuccess) {
+                        log.info("✓ Catering succesvol bevestigd tijdens retry voor order {}", order.getId());
+                        removePendingCompensation(order, "catering");
+                        log.info("Updated pending compensations for order {}: {}", order.getId(), order.getPendingCompensations());
+                        pending = order.getPendingCompensations(); 
+                    }
+                } catch (Exception e) {
+                    cateringSuccess = false;
+                }
+            } else {
+                cateringSuccess = true;
             }
-            cateringSuccess = true; // Catering was already confirmed
-            
-        } else if (!order.getPendingCompensations().contains("venue") && order.getPendingCompensations().contains("catering")) {
-            try {
-                cateringSuccess = brokerController.confirmCatering(order.getCateringId(), formatDate);
-            } catch (Exception e) {
-                cateringSuccess = false;
+
+            if (pending != null && pending.contains("venue")) {
+                try {
+                    venueSuccess = brokerController.confirmVenue(order.getVenueId(), formatDate);
+                    if (venueSuccess) {
+                        log.info("✓ Venue succesvol bevestigd tijdens retry voor order {}", order.getId());
+                        removePendingCompensation(order, "venue");
+                        log.info("Updated pending compensations for order {}: {}", order.getId(), order.getPendingCompensations());
+                        pending = order.getPendingCompensations();
+                    }
+                } catch (Exception e) {
+                    venueSuccess = false;
+                }
+            } else {
+                venueSuccess = true;
             }
-            venueSuccess = true; // Venue was already confirmed
-        } else if (order.getPendingCompensations().contains("venue") && order.getPendingCompensations().contains("catering")) {
-            try {
-                cateringSuccess = brokerController.confirmCatering(order.getCateringId(), formatDate);
-            } catch (Exception e) {
-                cateringSuccess = false;
-            } 
-            try {
-                venueSuccess = brokerController.confirmVenue(order.getVenueId(), formatDate);
-            } catch (Exception e) {
-                venueSuccess = false;
-            }
-        } 
+        }
         
         if (venueSuccess && cateringSuccess) {
             log.info("🎉 Volledig succes! PENDING order {} is binnen de 15 minuten succesvol bevestigd!", order.getId());
@@ -234,7 +253,7 @@ public class FailureRecoveryScheduler {
 
         } else {
             // Het is nog niet gelukt. We verhogen de teller en proberen het later opnieuw via backoff
-            log.warn("✗ ONe or more suplliers are still nieeded. Order {} stays PENDING.", order.getId());
+            log.warn("✗ One or more suppliers are still needed. Order {} stays PENDING.", order.getId());
             order.setRetryCount(retryCount + 1);
             order.setStatus("PENDING");
         }
@@ -242,6 +261,7 @@ public class FailureRecoveryScheduler {
         // Update de tracking gegevens in de database
         order.setLastRetryTime(new Date());
         orderRepository.save(order);
+        return "order-processing";
     }
     
     /**
