@@ -4,7 +4,43 @@
     <meta charset="UTF-8">
     <title>Manager Portal | Orders</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 2rem; background: #f4f6f8; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background: #f4f6f8;
+        }
+
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .header-buttons a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .header-buttons a:hover {
+            color: #3498db;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            overflow-x: auto;
+            padding: 0 2rem;
+        }
         h1 { color: #2c3e50; }
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         th { background: #34495e; color: white; padding: 12px; text-align: left; font-size: 0.9rem; }
@@ -24,9 +60,21 @@
 </head>
 <body>
 
-<h1>All Orders
-    <a href="/manager/logout" class="logout">Logout</a>
-</h1>
+<header>
+    <h2 style="margin:0;">EventFlow Broker - Manager Portal</h2>
+
+    <div class="header-buttons">
+        <a th:href="@{/}">Home</a>
+
+        <a th:href="@{/logout}">
+            Logout
+        </a>
+    </div>
+</header>
+
+<h1 style="padding:2rem 2rem 1rem 2rem;">
+    All Orders
+</h1>    
 
 <div class="container">
 <table>

@@ -1,8 +1,6 @@
 package com.DSfinal.broker;
 
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,12 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.prepost.PreAuthorize;
 
-import java.util.Map;
-import java.util.Collections;
 import java.util.List;
-import java.time.LocalDate;
 import java.util.UUID;
 import java.util.Date;
 import java.util.Optional;
@@ -196,6 +191,7 @@ public class BrokerViewController {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/broker/review-order")
     //@Transactional
     public String reviewOrder(OrderRequest request, Model model) {
