@@ -54,6 +54,11 @@
         .status-retrying { background: #e2e3e5; color: #383d41; padding: 4px 8px; border-radius: 4px; }
         .timestamp { color: #7f8c8d; font-size: 0.8rem; }
         .container { max-width: 1600px; margin: 0 auto; overflow-x: auto; }
+        .table-wrapper {
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .retry-info { color: #9b59b6; font-size: 0.75rem; font-weight: bold; }
         .pending-comps { color: #e74c3c; font-size: 0.8rem; }
     </style>
@@ -77,6 +82,7 @@
 </h1>    
 
 <div class="container">
+    <div class="table-wrapper">
 <table>
     <thead>
     <tr>
@@ -124,6 +130,7 @@
     </tr>
     </tbody>
 </table>
+    </div>
 </div>
 
 </body>
