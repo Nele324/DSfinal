@@ -15,20 +15,48 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 public class RestTemplateConfig {
 
     @Bean
-    public RestTemplate restTemplate() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        
-        // Connect timeout: 3000 milliseconden (= 3 seconden)
-        factory.setConnectTimeout(3000);
-        
-        // Read timeout: 3000 milliseconden (= 3 seconden)
-        factory.setReadTimeout(3000);
-        
-        return new RestTemplate(factory);
+    public RestTemplate restTemplate(
+            Auth0TokenService tokenService) {
+
+        SimpleClientHttpRequestFactory factory =
+                new SimpleClientHttpRequestFactory();
+        RestTemplate restTemplate =
+                new RestTemplate(factory);
+
+                restTemplate.getInterceptors().add((request, body, execution) -> {
+                        // avoid fetching a token for simple GETs (public endpoints)
+                        // only add Authorization header for non-GET methods (reserve/confirm/cancel)
+                        try {
+                                System.out.println("Broker -> calling: " + request.getMethod() + " " + request.getURI());
+                                if (request.getMethod() != null && request.getMethod() != HttpMethod.GET) {
+                                        String token = tokenService.getAccessToken();
+                                        if (token != null && !token.isBlank()) {
+                                                request.getHeaders().setBearerAuth(token);
+                                                System.out.println("Added bearer token for call to " + request.getURI());
+                                        } else {
+                                                System.out.println("No token available for protected call to " + request.getURI());
+                                        }
+                                } else {
+                                        // public GET - do not attempt to fetch token (keeps supplier discovery resilient)
+                                        System.out.println("Skipping token for public GET " + request.getURI());
+                                }
+                        } catch (Exception ex) {
+                                System.out.println("Failed to obtain token: " + ex.getMessage());
+                                // for GET requests we can continue without token, for others rethrow to fail fast
+                                if (request.getMethod() != null && request.getMethod() != HttpMethod.GET) {
+                                        throw ex;
+                                }
+                        }
+
+                        return execution.execute(request, body);
+                });
+
+        return restTemplate;
     }
 }

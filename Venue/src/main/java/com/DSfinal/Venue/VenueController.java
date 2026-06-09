@@ -2,8 +2,8 @@ package com.DSfinal.Venue;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.HttpStatusCode;
 
 import java.util.List;
 
@@ -51,13 +51,20 @@ public class VenueController {
         return ResponseEntity.ok(hall);
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_reserve:venue')")
     @PostMapping("/reserve")
-    public ResponseEntity<ReserveResponse> reserve(
-            @RequestBody ReserveRequest request) {
+        public ResponseEntity<ReserveResponse> reserve(
+            
+            @RequestBody ReserveRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        // print the Authorization header so we can verify security on incoming requests
+        System.out.println("Authorization: " + authHeader);
+        System.out.println("RESERVE ENDPOINT CALLED");
 
         ReserveResponse response =
-                venueService.reserveVenue(request);
-
+            venueService.reserveVenue(request);
+        
         if (!response.isSuccess()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
@@ -65,6 +72,7 @@ public class VenueController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_cancel:venue')")
     @PostMapping("/cancel")
     public ResponseEntity<ReserveResponse> cancel(
             @RequestParam String venueId,
@@ -80,6 +88,7 @@ public class VenueController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_confirm:venue')")
     @PostMapping("/confirm")
     public ResponseEntity<ReserveResponse> confirm(
             @RequestParam String venueId,

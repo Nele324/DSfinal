@@ -3,7 +3,7 @@ package com.DSfinal.Catering;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -41,6 +41,7 @@ public class CateringController {
         return ResponseEntity.ok(option);
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_reserve:catering')")
     @PostMapping("/reserve")
     public ResponseEntity<ReserveResponse> reserve(
             @RequestBody ReserveRequest request) {
@@ -55,6 +56,7 @@ public class CateringController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_cancel:catering')")
     @PostMapping("/cancel")
     public ResponseEntity<ReserveResponse> cancel(
             @RequestParam String cateringId,
@@ -69,7 +71,8 @@ public class CateringController {
 
         return ResponseEntity.ok(response);
     }
-
+    
+    @PreAuthorize("hasAuthority('SCOPE_confirm:catering')")
     @PostMapping("/confirm")
     public ResponseEntity<ReserveResponse> confirm(
             @RequestParam String cateringId,
