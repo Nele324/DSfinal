@@ -42,11 +42,32 @@
             padding: 0 2rem;
         }
         h1 { color: #2c3e50; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        th { background: #34495e; color: white; padding: 12px; text-align: left; font-size: 0.9rem; }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.9rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
         td { padding: 12px; border-bottom: 1px solid #ecf0f1; font-size: 0.85rem; }
         tr:last-child td { border-bottom: none; }
         .logout { float: right; color: #e74c3c; text-decoration: none; }
+        .status-cancelled { background: #e2e3e5; color: #383d41; padding: 4px 8px; border-radius: 4px; }
         .status-confirmed { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; }
         .status-reserved { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; }
         .status-failed { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 4px; }
@@ -66,7 +87,7 @@
 <body>
 
 <header>
-    <h2 style="margin:0;">EventFlow Broker - Manager Portal</h2>
+    <h2 style="margin:0;">Book My Event - Manager Portal</h2>
 
     <div class="header-buttons">
         <a th:href="@{/}">Home</a>
@@ -82,6 +103,17 @@
 </h1>    
 
 <div class="container">
+
+    <div class="mb-4 w-full">
+        <label for="orderSearch" class="block text-sm font-medium text-slate-700 mb-1.5">
+            Search Orders
+        </label>
+
+        <input type="text" id="orderSearch" onkeyup="filterOrders()"
+               placeholder="Search orders by ID, status, date, venue..."
+               class="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white text-sm text-slate-900 placeholder-slate-400">
+    </div>
+
     <div class="table-wrapper">
 <table>
     <thead>
@@ -104,10 +136,11 @@
         <td>
             <span th:if="${order.status == 'CONFIRMED'}" class="status-confirmed" th:text="${order.status}"></span>
             <span th:if="${order.status == 'RESERVED'}" class="status-reserved" th:text="${order.status}"></span>
+            <span th:if="${order.status == 'CANCELLED'}" class="status-cancelled" th:text="${order.status}"></span>
             <span th:if="${order.status == 'FAILED_ROLLED_BACK'}" class="status-failed" th:text="${order.status}"></span>
             <span th:if="${order.status == 'FAILED_ROLLBACK_INCOMPLETE'}" class="status-rollback-incomplete" th:text="${order.status}"></span>
             <span th:if="${order.status == 'FAILED_PERMANENT'}" class="status-failed" th:text="${order.status}"></span>
-            <span th:unless="${order.status == 'CONFIRMED' || order.status == 'RESERVED' || order.status == 'FAILED_ROLLED_BACK' || order.status == 'FAILED_ROLLBACK_INCOMPLETE' || order.status == 'FAILED_PERMANENT'}" th:text="${order.status}"></span>
+            <span th:unless="${order.status == 'CONFIRMED' || order.status == 'RESERVED' || order.status == 'FAILED_ROLLED_BACK' || order.status == 'CANCELLED' || order.status == 'FAILED_ROLLBACK_INCOMPLETE' || order.status == 'FAILED_PERMANENT'}" th:text="${order.status}"></span>
         </td>
         <td class="timestamp" th:text="${#dates.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
         <td th:text="${#dates.format(order.date, 'yyyy-MM-dd')}"></td>
@@ -133,5 +166,30 @@
     </div>
 </div>
 
+<script>
+    function filterOrders() {
+        // Get the string the manager typed and turn it lowercase
+        let input = document.getElementById("orderSearch");
+        let filter = input.value.toLowerCase();
+
+        // Target the table rows
+        let table = document.querySelector("table");
+        let tr = table.getElementsByTagName("tr");
+
+        // Loop through all table rows (skipping the header row at index 0)
+        for (let i = 1; i < tr.length; i++) {
+            // Get all the text content inside this specific row combined
+            let rowText = tr[i].textContent || tr[i].innerText;
+
+            if (rowText.toLowerCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";      // Show the row if it matches
+            } else {
+                tr[i].style.display = "none";  // Hide the row if it doesn't match
+            }
+        }
+    }
+</script>
+
 </body>
 </html>
+

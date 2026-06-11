@@ -96,8 +96,8 @@ public class BrokerViewController {
                                Model model) {
         log.info("=== CONFIRM ORDER START ===");
 
-        //log.warn("CRITICAL: Broker stort nu volledig ter aarde!");
-        //System.exit(0);
+//        log.warn("CRITICAL: Broker stort nu volledig ter aarde!");
+//        System.exit(0);
 
         log.info("Attempting to confirm order with ID: {}", orderId);
         log.info("All orders currently in database: {}", orderRepository.count());
@@ -189,6 +189,34 @@ public class BrokerViewController {
             log.error("Error saving order to database: {}", e.getMessage(), e);
             throw e;
         }
+    }
+
+    @PostMapping("/broker/cancel-order")
+    public String cancelOrder(
+            @RequestParam String orderId,
+            @RequestParam String selectedVenue,
+            @RequestParam String selectedCatering,
+            @RequestParam String date,
+            Model model) {
+
+        log.info("=== CANCEL ORDER START === orderId: {}", orderId);
+
+        // reverse order — release catering first, then venue
+        boolean cateringReleased = apiController.releaseCatering(selectedCatering, date);
+        boolean venueReleased = apiController.releaseVenue(selectedVenue, date);
+
+        if (!cateringReleased) log.warn("Could not release catering {} for date {}", selectedCatering, date);
+        if (!venueReleased) log.warn("Could not release venue {} for date {}", selectedVenue, date);
+
+        // mark as CANCELLED instead of deleting
+        orderRepository.findById(orderId).ifPresent(order -> {
+            order.setStatus("CANCELLED");
+            orderRepository.save(order);
+            log.info("Order {} marked as CANCELLED", orderId);
+        });
+
+        // send user back to home
+        return "redirect:/";
     }
 
     @PreAuthorize("isAuthenticated()")

@@ -3,6 +3,22 @@ let lastSelected = {
     selectedCatering: null
 };
 
+document.addEventListener('DOMContentLoaded', () => {
+    const reviewBtn = document.getElementById('reviewButton');
+    const status = document.querySelector('.status-badge span');
+
+    // check if either supplier list is empty
+    const cateringCards = document.querySelectorAll('.catering-card');
+    const venueCards = document.querySelectorAll('.venue-card');
+
+    if (cateringCards.length === 0 || venueCards.length === 0) {
+        reviewBtn.disabled = true;
+        reviewBtn.style.backgroundColor = '#95a5a6';
+        reviewBtn.style.cursor = 'not-allowed';
+        reviewBtn.textContent = '⚠️ Cannot proceed — one or more suppliers unavailable';
+    }
+});
+
 function handleRadioClick(radio) {
     const name = radio.name;
 

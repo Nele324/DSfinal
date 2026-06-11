@@ -188,7 +188,7 @@ xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 
     <!-- Left -->
     <div class="header-left">
-        <h2 style="margin:0;">EventFlow Broker</h2>
+        <h2 style="margin:0;">BookMyEvent</h2>
     </div>
 
     <!-- Center -->
@@ -254,6 +254,15 @@ xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
                         <p>🚫 <strong>Sorry!</strong> No catering service is large enough for your guest count.</p>
                     </div>
 
+                    <!-- show this when catering service is down -->
+                    <div th:if="${cateringPackages == null or #lists.isEmpty(cateringPackages)}"
+                         style="display: flex; flex-direction: column; align-items: center;
+                justify-content: center; height: 100%; color: #e74c3c; text-align: center;">
+                        <div style="font-size: 2rem;">⚠️</div>
+                        <p><strong>Catering service is currently unavailable.</strong></p>
+                        <p style="font-size: 0.85rem; color: #7f8c8d;">Please try again later</p>
+                    </div>
+
                     <div class="item-card catering-card"
                          th:each="item : ${cateringPackages}"
                          th:attr="data-max=${item.maxGuests}">
@@ -271,7 +280,7 @@ xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
                         <div style="text-align: right;">
 
                             <div class="item-price"
-                                 th:text="'$' + ${item.pricePerPerson}">
+                                 th:text="'$' + ${item.pricePerPerson * item.getMaxGuests()}">
                                 $0
                             </div>
 
@@ -294,6 +303,14 @@ xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 
                     <div id="venue-empty-msg" style="display: none; text-align: center; padding: 20px; color: #7f8c8d;">
                         <p>🚫 <strong>Sorry!</strong> No venues are large enough for your guest count.</p>
+                    </div>
+
+                    <div th:if="${venues == null or #lists.isEmpty(venues)}"
+                         style="display: flex; flex-direction: column; align-items: center;
+                justify-content: center; height: 100%; color: #e74c3c; text-align: center;">
+                        <div style="font-size: 2rem;">⚠️</div>
+                        <p><strong>Venue service is currently unavailable.</strong></p>
+                        <p style="font-size: 0.85rem; color: #7f8c8d;">Please try again later.</p>
                     </div>
 
                     <div class="item-card venue-card"
@@ -329,8 +346,8 @@ xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
         <div class="checkout-section">
             <h3>3. Order information</h3>
             <div class="form-group">
-                <label for="address"><strong>Delivery Address:</strong></label>
-                <input type="text" id="address" name="address" placeholder="Enter delivery address" required>
+                <label for="address"><strong>Billing Address:</strong></label>
+                <input type="text" id="address" name="address" placeholder="Enter billing address" required>
             </div>
             <div class="form-group">
                 <label for="cardNumber"><strong>Card Number:</strong></label>

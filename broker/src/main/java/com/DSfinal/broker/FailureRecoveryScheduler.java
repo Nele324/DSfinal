@@ -59,13 +59,13 @@ public class FailureRecoveryScheduler {
 
                 if (order.getLastRetryTime() == null) {
                     order.setLastRetryTime(new Date());
-                    order.setRetryCount(1); // Start de eerste tick
+                    order.setRetryCount(1); // Start the first tick
                     orderRepository.save(order);
                     continue; 
                 }
                 // Check if this order has been in RESERVED for more than 5 minutes (indicating a possible crash)
                 int currentTicks = order.getRetryCount() != null ? order.getRetryCount() : 0; 
-                if (currentTicks >= 60) { 
+                if (currentTicks >= 60) { // change this to a smaller number(1 or 2) to show test 3 during the defense
                     log.warn("Order {} has been in RESERVED status for over 24 hours - treating as potential crash", order.getId());
                     order.setStatus("FAILED_ROLLBACK_INCOMPLETE");
                     order.setPendingCompensations("venue,catering");

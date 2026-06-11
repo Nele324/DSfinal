@@ -1,10 +1,54 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>Success</title></head>
-<body>
-<h1 style="color: green;">Order Confirmed!</h1>
-<p th:text="${message}"></p>
-<p>Your venue and catering have been reserved successfully.</p>
-<a href="/">Back to Shop</a>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @keyframes scaleIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-scale {
+            animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen flex items-center justify-center p-4">
+
+<div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-slate-100">
+
+    <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-emerald-100 mb-6 animate-scale">
+        <svg class="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+    </div>
+
+    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+        Order Confirmed!
+    </h1>
+
+    <p class="text-emerald-600 font-semibold text-sm bg-emerald-50 inline-block px-4 py-1.5 rounded-full mb-6"
+       th:text="${message}">
+        Order Confirmed Successfully!
+    </p>
+
+    <div class="space-y-2 mb-8 text-slate-600 text-sm leading-relaxed">
+        <p>Your venue arrangement and catering options have been fully locked in and reserved successfully.</p>
+        <p class="text-xs text-slate-400">Our automated synchronization pipelines have confirmed this status with our partners.</p>
+    </div>
+
+    <hr class="border-slate-100 my-6">
+
+    <div class="flex flex-col space-y-3">
+        <a href="/"
+           class="w-full inline-flex justify-center items-center px-5 py-3 rounded-xl bg-slate-900 text-white font-medium text-sm hover:bg-slate-800 transition duration-200 shadow-sm shadow-slate-900/10">
+            Return to Store Dashboard
+        </a>
+    </div>
+
+</div>
+
 </body>
 </html>
